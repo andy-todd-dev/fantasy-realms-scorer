@@ -1,0 +1,7 @@
+{
+  "name": "fantasy-realms-scorer",
+  "slug": "fantasy-realms-scorer",
+  "android": {
+    "package": "dev.andytodd.fantasyrealmsscorer"
+  }
+}

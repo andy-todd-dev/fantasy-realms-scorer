@@ -1,0 +1,32 @@
+{
+  "name": "fantasy-realms-scorer",
+  "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
+  "features": {
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "26.13.0"
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "jdkDistro": "tem"
+    },
+    "ghcr.io/andy-todd-dev/devcontainer-features/android-sdk:1": {
+      "platformsVersion": "36",
+      "buildToolsVersion": "36.0.0",
+      "installNdk": true,
+      "ndkVersion": "27.1.12297006",
+      "installCmake": true,
+      "cmakeVersion": "3.22.1"
+    }
+  },
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=gradle-cache-${devcontainerId},target=/home/vscode/.gradle,type=volume",
+    "source=android-config-${devcontainerId},target=/home/vscode/.android,type=volume"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "REACT_NATIVE_PACKAGER_HOSTNAME": "127.0.0.1"
+  },
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.gradle /home/vscode/.android /usr/local/android"
+}

@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "expo": "^57.0.1",
+    "expo-dev-client": "~57.0.20",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "^0.21.0"
+  },
+  "name": "fantasy-realms-scorer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "preandroid": "tsc --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.4",
+    "typescript": "~6.0.3"
+  }
+}
