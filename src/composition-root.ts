@@ -1,13 +1,16 @@
 import { asFunction, createContainer, InjectionMode } from "awilix";
+import {
+  AddCardToHand,
+  AddCardToHandUseCase,
+} from "./application/add-card-to-hand.usecase";
 import { LoadCards, LoadCardsUseCase } from "./application/load-cards.usecase";
-import { SelectCard, SelectCardUseCase } from "./application/select-card.usecase";
 import { UseCases } from "./application/use-cases";
 import { InMemoryCardCatalog } from "./infrastructure/driven/in-memory-card-catalog";
 
 type Cradle = {
+  addCardToHand: AddCardToHand;
   cardCatalog: InMemoryCardCatalog;
   loadCards: LoadCards;
-  selectCard: SelectCard;
 };
 
 export function createUseCases(): UseCases {
@@ -17,12 +20,12 @@ export function createUseCases(): UseCases {
   });
 
   container.register({
+    addCardToHand: asFunction(() => new AddCardToHandUseCase()).singleton(),
     cardCatalog: asFunction(() => new InMemoryCardCatalog()).singleton(),
     loadCards: asFunction((deps: Cradle) => new LoadCardsUseCase(deps)).singleton(),
-    selectCard: asFunction(() => new SelectCardUseCase()).singleton(),
   });
 
-  const { loadCards, selectCard } = container.cradle;
+  const { addCardToHand, loadCards } = container.cradle;
 
-  return { loadCards, selectCard };
+  return { addCardToHand, loadCards };
 }

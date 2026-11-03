@@ -1,7 +1,7 @@
+import { AddCardToHand } from "./add-card-to-hand.usecase";
 import { LoadCards } from "./load-cards.usecase";
-import { SelectCard } from "./select-card.usecase";
 
 export interface UseCases {
+  addCardToHand: AddCardToHand;
   loadCards: LoadCards;
-  selectCard: SelectCard;
 }

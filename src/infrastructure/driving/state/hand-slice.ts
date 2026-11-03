@@ -11,10 +11,10 @@ const initialState: HandState = {
   cardIds: [],
 };
 
-export const selectCard = createAppAsyncThunk(
-  "hand/selectCard",
+export const addCardToHand = createAppAsyncThunk(
+  "hand/addCard",
   (cardId: CardId, { extra, getState }) =>
-    extra.selectCard.execute(getState().hand.cardIds, cardId),
+    extra.addCardToHand.execute(getState().hand.cardIds, cardId),
 );
 
 const handSlice = createSlice({
@@ -22,7 +22,7 @@ const handSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(selectCard.fulfilled, (_, action) => ({
+    builder.addCase(addCardToHand.fulfilled, (_, action) => ({
       cardIds: action.payload,
     }));
   },
