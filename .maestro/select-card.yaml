@@ -1,0 +1,63 @@
+appId: dev.andytodd.fantasyrealmsscorer
+---
+- runFlow: subflows/open-app.yaml
+
+# Cards load through the real wiring, and the hand starts empty.
+# The long wait covers Metro's first bundle on debug builds.
+- extendedWaitUntil:
+    visible:
+      id: card-option-king
+    timeout: 60000
+- assertVisible:
+    id: card-option-queen
+- assertVisible: "No cards selected."
+
+# Tapping King shows its details without adding it to the hand
+- tapOn:
+    id: card-option-king
+- assertVisible:
+    id: card-details-king
+- assertVisible: "Base strength: 8"
+- assertVisible: "No cards selected."
+
+# Adding King puts it in the hand and disables the button
+- tapOn:
+    id: add-to-hand-king
+- assertVisible:
+    id: hand-card-king
+- assertNotVisible: "No cards selected."
+- assertVisible:
+    id: add-to-hand-king
+    enabled: false
+
+# Tapping the button again does nothing
+- tapOn:
+    id: add-to-hand-king
+- assertNotVisible:
+    id: hand-card-king
+    index: 1
+
+# Tapping Queen closes King's details and opens Queen's
+- tapOn:
+    id: card-option-queen
+- assertNotVisible:
+    id: card-details-king
+- assertVisible:
+    id: card-details-queen
+
+# Adding Queen puts it after King
+- tapOn:
+    id: add-to-hand-queen
+- assertVisible:
+    id: hand-card-queen
+    below:
+      id: hand-card-king
+- assertVisible:
+    id: add-to-hand-queen
+    enabled: false
+
+# Tapping Queen again closes its details
+- tapOn:
+    id: card-option-queen
+- assertNotVisible:
+    id: card-details-queen

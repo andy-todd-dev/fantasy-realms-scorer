@@ -17,7 +17,8 @@
       "ndkVersion": "27.1.12297006",
       "installCmake": true,
       "cmakeVersion": "3.22.1"
-    }
+    },
+    "./features/maestro": {}
   },
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
