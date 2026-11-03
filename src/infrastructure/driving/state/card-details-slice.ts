@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { CardId } from "../../../domain/card";
+import type { CardId } from "../../../domain/card";
 
 type CardDetailsState = {
   openCardId: CardId | null;

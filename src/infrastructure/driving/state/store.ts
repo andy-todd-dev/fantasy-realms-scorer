@@ -3,11 +3,13 @@ import { UseCases } from "../../../application/use-cases";
 import { cardDetailsReducer } from "./card-details-slice";
 import { cardsReducer } from "./cards-slice";
 import { handReducer } from "./hand-slice";
+import { scoreReducer } from "./score-slice";
 
 const reducer = combineReducers({
   cardDetails: cardDetailsReducer,
   cards: cardsReducer,
   hand: handReducer,
+  score: scoreReducer,
 });
 
 export function createAppStore(useCases: UseCases) {

@@ -11,6 +11,7 @@ appId: dev.andytodd.fantasyrealmsscorer
 - assertVisible:
     id: card-option-queen
 - assertVisible: "No cards selected."
+- assertVisible: "Score: 0"
 
 # Tapping King shows its details without adding it to the hand
 - tapOn:
@@ -26,6 +27,7 @@ appId: dev.andytodd.fantasyrealmsscorer
 - assertVisible:
     id: hand-card-king
 - assertNotVisible: "No cards selected."
+- assertVisible: "Score: 8"
 - assertVisible:
     id: add-to-hand-king
     enabled: false
@@ -52,6 +54,7 @@ appId: dev.andytodd.fantasyrealmsscorer
     id: hand-card-queen
     below:
       id: hand-card-king
+- assertVisible: "Score: 14"
 - assertVisible:
     id: add-to-hand-queen
     enabled: false

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Card } from "../../../domain/card";
+import type { Card } from "../../../domain/card";
 import { createAppAsyncThunk } from "./create-app-async-thunk";
 
 type CardsState = {
