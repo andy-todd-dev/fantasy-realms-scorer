@@ -1,0 +1,15 @@
+appId: dev.andytodd.fantasyrealmsscorer
+---
+- launchApp:
+    clearState: true
+
+# Debug builds have no bundled JavaScript, so connect the dev client to Metro
+- runFlow:
+    when:
+      true: ${APP_BUILD == 'debug'}
+    commands:
+      # The launcher ignores links sent before it has finished starting
+      - extendedWaitUntil:
+          visible: "Fetch development servers"
+          timeout: 15000
+      - openLink: exp+fantasy-realms-scorer://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081&disableAutoLaunch=1&disableFab=1

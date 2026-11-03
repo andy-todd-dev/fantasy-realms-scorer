@@ -1,0 +1,18 @@
+{
+  "id": "maestro",
+  "version": "1.0.0",
+  "name": "Maestro",
+  "description": "Installs the Maestro CLI for end-to-end tests on a connected device.",
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "2.12.1",
+      "description": "Maestro CLI version to install."
+    }
+  },
+  "containerEnv": {
+    "PATH": "/usr/local/maestro/bin:${PATH}",
+    "MAESTRO_CLI_NO_ANALYTICS": "1"
+  },
+  "installsAfter": ["ghcr.io/devcontainers/features/java"]
+}
