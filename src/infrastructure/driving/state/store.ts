@@ -1,9 +1,11 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { UseCases } from "../../../application/use-cases";
+import { cardDetailsReducer } from "./card-details-slice";
 import { cardsReducer } from "./cards-slice";
 import { handReducer } from "./hand-slice";
 
 const reducer = combineReducers({
+  cardDetails: cardDetailsReducer,
   cards: cardsReducer,
   hand: handReducer,
 });

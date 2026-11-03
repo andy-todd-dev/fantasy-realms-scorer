@@ -19,6 +19,8 @@ npm run test:e2e:release             # run Maestro flows on the installed releas
 npm run test:e2e:build:release       # build and install the release app, then run the flows
 ```
 
+Do not install the app on the phone or run Maestro flows unless explicitly told to.
+
 ## Architecture
 
 Hexagonal. Dependencies point inwards; ESLint enforces the boundaries.
@@ -37,6 +39,8 @@ Conventions:
 - Ports: each `.ports.ts` file belongs to one use case, exports a `<Name>Ports` interface plus named interfaces for each capability, and declares only what that use case calls. Tolerate similar ports, and extract a shared type only if they keep changing together.
 - Commands: anything that changes state goes UI -> thunk -> use case, even with no I/O, so adding I/O later doesn't change the call path. Thunks receive use cases through the `extra` argument and never see ports.
 - Reads: selectors derive values by calling pure domain functions directly. Use cases are for commands only.
-- Components only dispatch thunks and read selectors.
+- Components only dispatch thunks and slice actions, and read selectors.
+- Purely visual state, which wouldn't matter if the UI were replaced, can use a plain slice action rather than a thunk and use case.
 - Store state must be serializable. Derive values with selectors rather than storing them.
-- Add a driven port when a use case needs something it doesn't own or determine itself: outside state, I/O, time, randomness. Logic we own goes in the domain. The in-memory card catalog is a deliberate exception so the first feature exercises every layer; review it when cards gain scoring rules.
+- Add a driven port when a use case needs something it doesn't own or determine itself: outside state, I/O, time, randomness. Logic we own goes in the domain. Cards are the exception: they are always served through the `CardCatalog` port, even as constants.
+- Redux and the UI only handle display data. Scoring logic stays in the application and domain layers.
