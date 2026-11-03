@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { CardId } from "../../../domain/card";
-import { Hand } from "../../../domain/hand";
+import type { CardId } from "../../../domain/card";
+import type { Hand } from "../../../domain/hand";
 import { createAppAsyncThunk } from "./create-app-async-thunk";
 
 type HandState = {

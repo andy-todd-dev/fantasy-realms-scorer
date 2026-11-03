@@ -1,9 +1,22 @@
+import { useEffect } from "react";
 import { Text, View } from "react-native";
-import { useAppSelector } from "../state/hooks";
-import { selectHandCards } from "../state/selectors";
+import { useAppDispatch, useAppSelector } from "../state/hooks";
+import { scoreHand } from "../state/score-slice";
+import {
+  selectHandCardIds,
+  selectHandCards,
+  selectScore,
+} from "../state/selectors";
 
 export function Hand() {
+  const dispatch = useAppDispatch();
+  const cardIds = useAppSelector(selectHandCardIds);
   const cards = useAppSelector(selectHandCards);
+  const score = useAppSelector(selectScore);
+
+  useEffect(() => {
+    dispatch(scoreHand());
+  }, [dispatch, cardIds]);
 
   return (
     <View style={{ padding: 16, gap: 8, borderTopWidth: 1 }}>
@@ -17,6 +30,7 @@ export function Hand() {
           </Text>
         ))
       )}
+      <Text testID="hand-score">Score: {score ?? "-"}</Text>
     </View>
   );
 }

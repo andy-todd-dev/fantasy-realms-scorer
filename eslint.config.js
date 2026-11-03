@@ -42,6 +42,24 @@ module.exports = defineConfig([
       ],
     },
   },
+  {
+    // Infrastructure may use domain types, but never calls domain functions.
+    files: ["src/infrastructure/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/domain/*"],
+              allowTypeImports: true,
+              message: "Infrastructure may only use `import type` from the domain.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   restrictPackages(
     ["src/domain/**", "src/application/**"],
     [...reactPackages, ...reduxPackages, ...awilix],

@@ -1,10 +1,8 @@
-import { getDeckCards } from "../../domain/deck";
-import {
-  CARDS,
-  DECKS,
-  DEFAULT_DECK,
-  InMemoryCardCatalog,
-} from "./in-memory-card-catalog";
+import { CARDS, DECKS, InMemoryCardCatalog } from "./in-memory-card-catalog";
+
+const king = { id: "king", name: "King", suit: "leader", baseStrength: 8 } as const;
+const queen = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 } as const;
+const unicorn = { id: "unicorn", name: "Unicorn", suit: "beast", baseStrength: 9 } as const;
 
 describe("card data", () => {
   it("gives every card a unique ID", () => {
@@ -24,23 +22,52 @@ describe("card data", () => {
 });
 
 describe("deck data", () => {
-  it.each(DECKS.map((deck) => [deck.id, deck] as const))(
-    "lists only known cards, without duplicates, in the %s deck",
-    (_, deck) => {
-      const knownIds = CARDS.map((card) => card.id);
+  it("gives every deck a unique ID", () => {
+    const ids = DECKS.map((deck) => deck.id);
 
-      expect(knownIds).toEqual(expect.arrayContaining([...deck.cardIds]));
-      expect(new Set(deck.cardIds).size).toBe(deck.cardIds.length);
-    },
-  );
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("puts every card in a known deck", () => {
+    const deckIds = DECKS.map((deck) => deck.id);
+
+    CARDS.forEach((card) => expect(deckIds).toContain(card.deckId));
+  });
 });
 
 describe("InMemoryCardCatalog", () => {
-  it("returns the default deck's cards", async () => {
-    const catalog = new InMemoryCardCatalog();
+  const catalog = new InMemoryCardCatalog([
+    { ...king, deckId: "base" },
+    { ...unicorn, deckId: "expansion" },
+    { ...queen, deckId: "base" },
+  ]);
 
-    await expect(catalog.getAll()).resolves.toEqual(
-      getDeckCards(DEFAULT_DECK, CARDS),
+  it("returns only the default deck's cards, without their deck ID", async () => {
+    await expect(catalog.getAll()).resolves.toEqual([king, queen]);
+  });
+
+  it("serves the sample cards by default", async () => {
+    const cards = await new InMemoryCardCatalog().getAll();
+
+    expect(cards.map((card) => card.id)).toEqual(["king", "queen", "basilisk"]);
+  });
+
+  it("returns cards by ID in the order requested", async () => {
+    await expect(catalog.getByIds(["queen", "king"])).resolves.toEqual([
+      queen,
+      king,
+    ]);
+  });
+
+  it("rejects when any requested card ID is unknown", async () => {
+    await expect(catalog.getByIds(["king", "unknown"])).rejects.toThrow(
+      "Unknown card: unknown",
+    );
+  });
+
+  it("rejects a card from another deck", async () => {
+    await expect(catalog.getByIds(["unicorn"])).rejects.toThrow(
+      "Unknown card: unicorn",
     );
   });
 });
