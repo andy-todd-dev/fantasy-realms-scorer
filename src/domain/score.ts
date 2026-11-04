@@ -29,10 +29,10 @@ function effectsOf(card: Card): readonly CardEffect[] {
   return [...(card.bonus?.effects ?? []), ...(card.penalty?.effects ?? [])];
 }
 
-//  Checks if the card matches the specified matcher. A matcher can either specify a suit or a specific card ID.
+//  Checks if the card matches the specified matcher. A matcher can either specify a suit, optionally excepting specific cards, or a specific card ID.
 function matches(card: Card, matcher: CardMatcher): boolean {
   return "suit" in matcher
-    ? card.suit === matcher.suit
+    ? card.suit === matcher.suit && !matcher.except?.includes(card.id)
     : card.id === matcher.cardId;
 }
 
@@ -80,6 +80,10 @@ function conditionNamesSuit(condition: EffectCondition, suit: Suit): boolean {
     return condition.anyOf.some((part) => conditionNamesSuit(part, suit));
   }
 
+  if ("allSuitsDifferent" in condition) {
+    return false;
+  }
+
   return namesSuit(
     "present" in condition ? condition.present : condition.absent,
     suit,
@@ -102,6 +106,10 @@ function withoutPenaltySuitWord(
     }
 
     if (effect.kind === "points" && effect.per && namesSuit(effect.per, suit)) {
+      return [];
+    }
+
+    if (effect.kind === "sum" && namesSuit(effect.of, suit)) {
       return [];
     }
 
@@ -156,21 +164,33 @@ function isBlanked(card: Card, cards: readonly Card[]): boolean {
 function blanksItself(card: Card, others: readonly Card[]): boolean {
   return effectsOf(card).some(
     (effect) =>
-      effect.kind === "blankSelf" && conditionHolds(effect.when, others),
+      effect.kind === "blankSelf" && conditionHolds(effect.when, card, others),
   );
 }
 
-// Checks if the specified effect condition holds true based on the other cards in the hand. A condition can require the presence or absence of a specific card or suit, or that all or any of several conditions hold.
+// Checks if the specified card and the other cards are all of different suits.
+function allSuitsDiffer(card: Card, others: readonly Card[]): boolean {
+  const suits = [card, ...others].map(({ suit }) => suit);
+
+  return new Set(suits).size === suits.length;
+}
+
+// Checks if the specified effect condition holds true for the card that owns the effect, based on the other cards in the hand. A condition can require the presence or absence of a specific card or suit, that all or any of several conditions hold, or that the owner and the other cards are all of different suits.
 function conditionHolds(
   condition: EffectCondition,
+  card: Card,
   others: readonly Card[],
 ): boolean {
   if ("allOf" in condition) {
-    return condition.allOf.every((part) => conditionHolds(part, others));
+    return condition.allOf.every((part) => conditionHolds(part, card, others));
   }
 
   if ("anyOf" in condition) {
-    return condition.anyOf.some((part) => conditionHolds(part, others));
+    return condition.anyOf.some((part) => conditionHolds(part, card, others));
+  }
+
+  if ("allSuitsDifferent" in condition) {
+    return allSuitsDiffer(card, others);
   }
 
   return "present" in condition
@@ -179,13 +199,60 @@ function conditionHolds(
 }
 
 
-// Calculates the points contributed by a specific effect based on the other cards in the hand. 
-function effectPoints(effect: CardEffect, others: readonly Card[]): number {
+// Returns the length of the longest run of consecutive base strengths. Duplicate strengths neither break nor extend a run.
+function longestBaseStrengthRun(cards: readonly Card[]): number {
+  const strengths = new Set(cards.map(({ baseStrength }) => baseStrength));
+
+  return Math.max(
+    0,
+    ...[...strengths].map((strength) => {
+      let length = 1;
+
+      while (strengths.has(strength + length)) {
+        length += 1;
+      }
+
+      return length;
+    }),
+  );
+}
+
+// Returns the points of the highest tier that the longest run in the hand reaches. Tiers don't add up, only the longest run pays, and a run longer than the top tier pays nothing extra.
+function baseStrengthRunPoints(
+  tiers: Extract<CardEffect, { kind: "baseStrengthRun" }>["tiers"],
+  cards: readonly Card[],
+): number {
+  const run = longestBaseStrengthRun(cards);
+
+  return tiers
+    .filter(({ length }) => length <= run)
+    .reduce((best, tier) => (tier.length > best.length ? tier : best), {
+      length: 0,
+      points: 0,
+    }).points;
+}
+
+// Calculates the points contributed by a specific effect of the specified card, based on the other cards in the hand. 
+function effectPoints(
+  effect: CardEffect,
+  card: Card,
+  others: readonly Card[],
+): number {
+  if (effect.kind === "baseStrengthRun") {
+    return baseStrengthRunPoints(effect.tiers, [card, ...others]);
+  }
+
+  if (effect.kind === "sum") {
+    return others
+      .filter((other) => matches(other, effect.of))
+      .reduce((total, other) => total + other[effect.attribute], 0);
+  }
+
   if (effect.kind !== "points") {
     return 0;
   }
 
-  if (effect.when && !conditionHolds(effect.when, others)) {
+  if (effect.when && !conditionHolds(effect.when, card, others)) {
     return 0;
   }
 
@@ -215,7 +282,7 @@ export function calculateScore(cards: readonly Card[]): number {
     const others = othersIn(remaining, card);
 
     return effectsOf(card).reduce(
-      (total, effect) => total + effectPoints(effect, others),
+      (total, effect) => total + effectPoints(effect, card, others),
       score + card.baseStrength,
     );
   }, 0);

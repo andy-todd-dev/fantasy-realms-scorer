@@ -13,15 +13,21 @@ export type Suit =
   | "flame"
   | "wild";
 
-export type CardMatcher =
-  | { readonly suit: Suit }
-  | { readonly cardId: CardId };
+export type SuitMatcher = {
+  readonly suit: Suit;
+  readonly except?: readonly CardId[];
+};
+
+export type CardIdMatcher = { readonly cardId: CardId };
+
+export type CardMatcher = SuitMatcher | CardIdMatcher;
 
 export type EffectCondition =
   | { readonly present: CardMatcher }
   | { readonly absent: CardMatcher }
   | { readonly allOf: readonly EffectCondition[] }
-  | { readonly anyOf: readonly EffectCondition[] };
+  | { readonly anyOf: readonly EffectCondition[] }
+  | { readonly allSuitsDifferent: true };
 
 export type CardEffect =
   | {
@@ -29,6 +35,18 @@ export type CardEffect =
       readonly points: number;
       readonly per?: CardMatcher;
       readonly when?: EffectCondition;
+    }
+  | {
+      readonly kind: "sum";
+      readonly of: CardMatcher;
+      readonly attribute: "baseStrength";
+    }
+  | {
+      readonly kind: "baseStrengthRun";
+      readonly tiers: readonly {
+        readonly length: number;
+        readonly points: number;
+      }[];
     }
   | {
       readonly kind: "blank";

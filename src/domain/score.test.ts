@@ -772,4 +772,417 @@ describe("calculateScore", () => {
       ).toBe(18); // (10 - 3) + 10 + 1
     });
   });
+
+  describe("allSuitsDifferent conditions", () => {
+    const allDifferent: EffectCondition = { allSuitsDifferent: true };
+    const subject = card("subject", "artifact", 2, [
+      { kind: "points", points: 50, when: allDifferent },
+    ]);
+
+    it("applies when every card is a different suit", () => {
+      expect(calculateScore([subject, anArmy, aLeader, aLand])).toBe(69); // (2 + 50) + 10 + 3 + 4
+    });
+
+    it("applies to a part-built hand, even with no other cards", () => {
+      expect(calculateScore([subject])).toBe(52); // 2 + 50
+    });
+
+    it("doesn't apply when two other cards share a suit", () => {
+      expect(calculateScore([subject, anArmy, anotherArmy])).toBe(32); // 2 + 10 + 20
+    });
+
+    it("doesn't apply when another card shares the owner's suit", () => {
+      const anotherArtifact = card("artifact-2", "artifact", 1);
+
+      expect(calculateScore([subject, anotherArtifact])).toBe(3); // 2 + 1
+    });
+
+    it("treats Wild as a suit like any other", () => {
+      const aWild = card("wild-1", "wild", 1);
+      const anotherWild = card("wild-2", "wild", 1);
+
+      expect(calculateScore([subject, aWild])).toBe(53); // (2 + 50) + 1
+      expect(calculateScore([subject, aWild, anotherWild])).toBe(4); // 2 + 1 + 1
+    });
+
+    it("ignores a card blanked by another card", () => {
+      const blanksAnotherArmy = card("blanker", "land", 4, [
+        { kind: "blank", targets: [{ cardId: "army-2" }] },
+      ]);
+
+      expect(
+        calculateScore([subject, anArmy, anotherArmy, blanksAnotherArmy]),
+      ).toBe(66); // (2 + 50) + 10 + 4
+    });
+
+    it("ignores a self-blanked card", () => {
+      const selfBlankingArmy = card("army-3", "army", 20, [
+        { kind: "blankSelf", when: { absent: { suit: "weapon" } } },
+      ]);
+
+      expect(calculateScore([subject, anArmy, selfBlankingArmy])).toBe(62); // (2 + 50) + 10
+    });
+
+    it("counts a card that a clear keeps in play", () => {
+      const aWeapon = card("weapon-1", "weapon", 5);
+      const selfBlankingWeapon: Card = {
+        ...card("weapon-2", "weapon", 40),
+        penalty: {
+          text: "",
+          effects: [{ kind: "blankSelf", when: { absent: { suit: "wizard" } } }],
+        },
+      };
+      const clearsWeapons = card("clearer", "land", 1, [
+        { kind: "clearPenalty", targets: [{ suit: "weapon" }] },
+      ]);
+
+      expect(calculateScore([subject, aWeapon, selfBlankingWeapon])).toBe(57); // (2 + 50) + 5
+      expect(
+        calculateScore([subject, aWeapon, selfBlankingWeapon, clearsWeapons]),
+      ).toBe(48); // 2 + 5 + 40 + 1
+    });
+
+    it("gives nothing when the owner is blanked", () => {
+      const blanksArtifacts = card("blanker", "land", 4, [
+        { kind: "blank", targets: [{ suit: "artifact" }] },
+      ]);
+
+      expect(calculateScore([subject, blanksArtifacts])).toBe(4);
+    });
+
+    it("combines with other conditions", () => {
+      const needsArmyToo = card("subject", "artifact", 2, [
+        {
+          kind: "points",
+          points: 50,
+          when: { allOf: [allDifferent, { present: { suit: "army" } }] },
+        },
+      ]);
+
+      expect(calculateScore([needsArmyToo, anArmy])).toBe(62); // (2 + 50) + 10
+      expect(calculateScore([needsArmyToo, aLand])).toBe(6); // 2 + 4
+    });
+
+    it("includes the owner's suit when deciding a self-blank", () => {
+      const blanksIfAllDifferent = card("subject", "wizard", 10, [
+        { kind: "blankSelf", when: allDifferent },
+      ]);
+      const aWizard = card("wizard-1", "wizard", 1);
+
+      expect(calculateScore([blanksIfAllDifferent, anArmy])).toBe(10); // subject blanked, army 10
+      expect(calculateScore([blanksIfAllDifferent, aWizard])).toBe(11); // 10 + 1
+    });
+
+    it("isn't removed by clearing a suit word, as it names no suit", () => {
+      const subjectWithPenalty: Card = {
+        ...card("subject", "wizard", 10),
+        penalty: {
+          text: "",
+          effects: [{ kind: "points", points: -5, when: allDifferent }],
+        },
+      };
+      const clearsArmyWord = card("clearer", "land", 1, [
+        { kind: "clearPenaltySuitWord", suit: "army" },
+      ]);
+
+      expect(calculateScore([subjectWithPenalty, clearsArmyWord])).toBe(6); // (10 - 5) + 1
+    });
+  });
+
+  describe("baseStrengthRun effects", () => {
+    const subject = card("subject", "artifact", 5, [
+      {
+        kind: "baseStrengthRun",
+        tiers: [
+          { length: 3, points: 10 },
+          { length: 4, points: 30 },
+          { length: 5, points: 60 },
+          { length: 6, points: 100 },
+          { length: 7, points: 150 },
+        ],
+      },
+    ]);
+    const strengths = (...values: readonly number[]): readonly Card[] =>
+      values.map((value, index) =>
+        card(`card-${index}-${value}`, "army", value),
+      );
+
+    it("pays nothing without a run", () => {
+      expect(calculateScore([subject])).toBe(5);
+      expect(calculateScore([subject, ...strengths(1, 9)])).toBe(15); // 5 + 1 + 9
+      expect(calculateScore([subject, ...strengths(6)])).toBe(11); // 5 + 6, a run of 2
+    });
+
+    it("pays only the tier the run reaches, as tiers don't add up", () => {
+      expect(calculateScore([subject, ...strengths(4, 6)])).toBe(25); // 5 + 4 + 6 + 10
+      expect(calculateScore([subject, ...strengths(4, 6, 7)])).toBe(52); // 5 + 4 + 6 + 7 + 30
+      expect(calculateScore([subject, ...strengths(3, 4, 6, 7)])).toBe(85); // 5 + 3 + 4 + 6 + 7 + 60
+      expect(calculateScore([subject, ...strengths(3, 4, 6, 7, 8)])).toBe(133); // 5 + 3 + 4 + 6 + 7 + 8 + 100
+      expect(calculateScore([subject, ...strengths(2, 3, 4, 6, 7, 8)])).toBe(185); // 5 + 2 + 3 + 4 + 6 + 7 + 8 + 150
+    });
+
+    it("pays nothing extra for a run longer than the top tier", () => {
+      expect(calculateScore([subject, ...strengths(1, 2, 3, 4, 6, 7, 8)])).toBe(186); // 5 + 1 + 2 + 3 + 4 + 6 + 7 + 8 + 150
+    });
+
+    it("pays for a run that doesn't include the owner", () => {
+      expect(calculateScore([subject, ...strengths(7, 8, 9)])).toBe(39); // 5 + 7 + 8 + 9 + 10
+    });
+
+    it("ignores duplicate strengths", () => {
+      expect(calculateScore([subject, ...strengths(4, 5, 6)])).toBe(30); // 5 + 4 + 5 + 6 + 10, a run of 3
+      expect(calculateScore([subject, ...strengths(6, 6)])).toBe(17); // 5 + 6 + 6, a run of 2
+    });
+
+    it("pays only the longest run", () => {
+      expect(calculateScore([subject, ...strengths(4, 6, 9, 10, 11)])).toBe(55); // 5 + 4 + 6 + 9 + 10 + 11 + 10, two runs of 3
+      expect(calculateScore([subject, ...strengths(6, 7, 8, 1, 2, 3)])).toBe(62); // 5 + 6 + 7 + 8 + 1 + 2 + 3 + 30, runs of 4 and 3
+    });
+
+    it("doesn't count a card blanked by another card", () => {
+      const [four, six] = strengths(4, 6);
+      const blanksSix = card("blanker", "land", 20, [
+        { kind: "blank", targets: [{ cardId: six.id }] },
+      ]);
+
+      expect(calculateScore([subject, four, six, blanksSix])).toBe(29); // 5 + 4 + 20
+    });
+
+    it("doesn't count a self-blanked card", () => {
+      const [four] = strengths(4);
+      const selfBlankingSix = card("self-blanker", "army", 6, [
+        { kind: "blankSelf", when: { absent: { suit: "weapon" } } },
+      ]);
+
+      expect(calculateScore([subject, four, selfBlankingSix])).toBe(9); // 5 + 4
+    });
+
+    it("counts a card that a clear keeps in play", () => {
+      const [four] = strengths(4);
+      const selfBlankingSix: Card = {
+        ...card("self-blanker", "wizard", 6),
+        penalty: {
+          text: "",
+          effects: [{ kind: "blankSelf", when: { absent: { suit: "weapon" } } }],
+        },
+      };
+      const clearsWizards = card("clearer", "land", 20, [
+        { kind: "clearPenalty", targets: [{ suit: "wizard" }] },
+      ]);
+
+      expect(calculateScore([subject, four, selfBlankingSix])).toBe(9); // 5 + 4
+      expect(
+        calculateScore([subject, four, selfBlankingSix, clearsWizards]),
+      ).toBe(45); // 5 + 4 + 6 + 20 + 10
+    });
+
+    it("gives nothing when the owner is blanked", () => {
+      const blanksArtifacts = card("blanker", "land", 20, [
+        { kind: "blank", targets: [{ suit: "artifact" }] },
+      ]);
+
+      expect(
+        calculateScore([subject, ...strengths(4, 6), blanksArtifacts]),
+      ).toBe(30); // 4 + 6 + 20
+    });
+
+    it("isn't affected by clearing a suit word", () => {
+      const clearsArmyWord = card("clearer", "land", 20, [
+        { kind: "clearPenaltySuitWord", suit: "army" },
+      ]);
+
+      expect(
+        calculateScore([subject, ...strengths(4, 6), clearsArmyWord]),
+      ).toBe(45); // 5 + 4 + 6 + 20 + 10
+    });
+  });
+
+  describe("suit matchers with exceptions", () => {
+    const armyExceptTwo = { suit: "army", except: ["army-2"] } as const;
+    const anotherLand = card("land-2", "land", 6);
+    const blanksLandsExceptFirst = card("blanker", "wizard", 1, [
+      { kind: "blank", targets: [{ suit: "land", except: ["land-1"] }] },
+    ]);
+
+    it("doesn't blank the excepted card, but blanks the rest of the suit", () => {
+      expect(
+        calculateScore([blanksLandsExceptFirst, aLand, anotherLand]),
+      ).toBe(5); // 1 + 4, land-2 blanked
+    });
+
+    it("still lets a different card blank the excepted card", () => {
+      const blanksFirstLand = card("other-blanker", "weapon", 2, [
+        { kind: "blank", targets: [{ cardId: "land-1" }] },
+      ]);
+
+      expect(
+        calculateScore([blanksLandsExceptFirst, blanksFirstLand, aLand]),
+      ).toBe(3); // 1 + 2, land-1 blanked
+    });
+
+    it("doesn't count the excepted card for per", () => {
+      const subject = card("subject", "wizard", 1, [
+        { kind: "points", points: 5, per: armyExceptTwo },
+      ]);
+
+      expect(calculateScore([subject, anArmy, anotherArmy])).toBe(36); // (1 + 5) + 10 + 20
+    });
+
+    it("doesn't count the excepted card as present", () => {
+      const subject = card("subject", "wizard", 1, [
+        { kind: "points", points: 5, when: { present: armyExceptTwo } },
+      ]);
+
+      expect(calculateScore([subject, anotherArmy])).toBe(21); // 1 + 20
+      expect(calculateScore([subject, anArmy])).toBe(16); // (1 + 5) + 10
+    });
+
+    it("treats the excepted card as missing for absent", () => {
+      const subject = card("subject", "wizard", 1, [
+        { kind: "points", points: -5, when: { absent: armyExceptTwo } },
+      ]);
+
+      expect(calculateScore([subject, anotherArmy])).toBe(16); // (1 - 5) + 20
+      expect(calculateScore([subject, anArmy])).toBe(11); // 1 + 10
+    });
+
+    it("doesn't clear the penalty on the excepted card", () => {
+      const penalisedFlood = (id: string): Card => ({
+        ...card(id, "flood", 5),
+        penalty: { text: "", effects: [{ kind: "points", points: -2 }] },
+      });
+      const clearer = card("clearer", "land", 1, [
+        { kind: "clearPenalty", targets: [{ suit: "flood", except: ["flood-1"] }] },
+      ]);
+
+      expect(
+        calculateScore([clearer, penalisedFlood("flood-1"), penalisedFlood("flood-2")]),
+      ).toBe(9); // 1 + (5 - 2) + 5
+    });
+
+    it("loses the whole target when its suit word is cleared, keeping other targets", () => {
+      const subject: Card = {
+        ...card("subject", "wizard", 1),
+        penalty: {
+          text: "",
+          effects: [
+            { kind: "blank", targets: [armyExceptTwo, { suit: "land" }] },
+          ],
+        },
+      };
+      const clearsArmyWord = card("clearer", "flame", 1, [
+        { kind: "clearPenaltySuitWord", suit: "army" },
+      ]);
+
+      expect(calculateScore([subject, anArmy, aLand])).toBe(1); // army-1 and land-1 blanked
+      expect(calculateScore([subject, anArmy, aLand, clearsArmyWord])).toBe(12); // 1 + 10 + 1, land-1 blanked
+    });
+  });
+
+  describe("sum effects", () => {
+    const sumOfArmies: CardEffect = {
+      kind: "sum",
+      of: { suit: "army" },
+      attribute: "baseStrength",
+    };
+    const subject = card("subject", "leader", 4, [sumOfArmies]);
+    const selfBlankingArmy: Card = {
+      ...card("army-3", "army", 20),
+      penalty: {
+        text: "",
+        effects: [{ kind: "blankSelf", when: { absent: { suit: "weapon" } } }],
+      },
+    };
+
+    it("adds the base strengths of the matching cards", () => {
+      expect(calculateScore([subject, anArmy, anotherArmy])).toBe(64); // (4 + 30) + 10 + 20
+    });
+
+    it("adds nothing without a matching card", () => {
+      expect(calculateScore([subject])).toBe(4);
+      expect(calculateScore([subject, aLand])).toBe(8); // 4 + 4
+    });
+
+    it("doesn't count the owner", () => {
+      const armySubject = card("subject", "army", 5, [sumOfArmies]);
+
+      expect(calculateScore([armySubject, anArmy])).toBe(25); // (5 + 10) + 10
+    });
+
+    it("doesn't count a card blanked by another card", () => {
+      const blanksAnotherArmy = card("blanker", "land", 1, [
+        { kind: "blank", targets: [{ cardId: "army-2" }] },
+      ]);
+
+      expect(
+        calculateScore([subject, anArmy, anotherArmy, blanksAnotherArmy]),
+      ).toBe(25); // (4 + 10) + 10 + 1
+    });
+
+    it("doesn't count a self-blanked card", () => {
+      expect(calculateScore([subject, anArmy, selfBlankingArmy])).toBe(24); // (4 + 10) + 10
+    });
+
+    it("counts a card that a clear keeps in play", () => {
+      const clearsArmies = card("clearer", "land", 1, [
+        { kind: "clearPenalty", targets: [{ suit: "army" }] },
+      ]);
+
+      expect(
+        calculateScore([subject, anArmy, selfBlankingArmy, clearsArmies]),
+      ).toBe(65); // (4 + 30) + 10 + 20 + 1
+    });
+
+    it("leaves a matching card's bonus and penalty out of the sum", () => {
+      const armyWithRules: Card = {
+        ...card("army-3", "army", 10),
+        bonus: { text: "", effects: [{ kind: "points", points: 3 }] },
+        penalty: { text: "", effects: [{ kind: "points", points: -8 }] },
+      };
+
+      expect(calculateScore([subject, armyWithRules])).toBe(19); // (4 + 10) + (10 + 3 - 8)
+    });
+
+    it("gives nothing when the owner is blanked", () => {
+      const blanksLeaders = card("blanker", "land", 1, [
+        { kind: "blank", targets: [{ suit: "leader" }] },
+      ]);
+
+      expect(calculateScore([subject, anArmy, blanksLeaders])).toBe(11); // 10 + 1
+    });
+
+    it("works with exceptions and named cards", () => {
+      const exceptSecondArmy = card("subject", "leader", 4, [
+        { ...sumOfArmies, of: { suit: "army", except: ["army-2"] } },
+      ]);
+      const onlySecondArmy = card("subject", "leader", 4, [
+        { ...sumOfArmies, of: { cardId: "army-2" } },
+      ]);
+
+      expect(calculateScore([exceptSecondArmy, anArmy, anotherArmy])).toBe(44); // (4 + 10) + 10 + 20
+      expect(calculateScore([onlySecondArmy, anArmy, anotherArmy])).toBe(54); // (4 + 20) + 10 + 20
+    });
+
+    it("is removed from a penalty when its suit word is cleared", () => {
+      const withPenalty = (effect: CardEffect): Card => ({
+        ...card("subject", "wizard", 1),
+        penalty: { text: "", effects: [effect] },
+      });
+      const clearsArmyWord = card("clearer", "land", 1, [
+        { kind: "clearPenaltySuitWord", suit: "army" },
+      ]);
+
+      expect(calculateScore([withPenalty(sumOfArmies), anArmy])).toBe(21); // (1 + 10) + 10
+      expect(
+        calculateScore([withPenalty(sumOfArmies), anArmy, clearsArmyWord]),
+      ).toBe(12); // 1 + 10 + 1
+      expect(
+        calculateScore([
+          withPenalty({ ...sumOfArmies, of: { cardId: "army-1" } }),
+          anArmy,
+          clearsArmyWord,
+        ]),
+      ).toBe(22); // (1 + 10) + 10 + 1, naming a card doesn't name the suit
+    });
+  });
 });
