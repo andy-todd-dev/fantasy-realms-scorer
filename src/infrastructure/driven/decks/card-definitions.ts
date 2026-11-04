@@ -22,6 +22,10 @@ export const allOf = (...conditions: EffectCondition[]): EffectCondition => ({
   allOf: conditions,
 });
 
+export const anyOf = (...conditions: EffectCondition[]): EffectCondition => ({
+  anyOf: conditions,
+});
+
 export const points = (
   amount: number,
   options: { per?: CardMatcher; when?: EffectCondition } = {},
@@ -40,4 +44,9 @@ export const blankSelf = ({ when }: { when: EffectCondition }): CardEffect => ({
 export const clearPenalty = (...targets: CardMatcher[]): CardEffect => ({
   kind: "clearPenalty",
   targets,
+});
+
+export const clearPenaltySuitWord = (suitName: Suit): CardEffect => ({
+  kind: "clearPenaltySuitWord",
+  suit: suitName,
 });

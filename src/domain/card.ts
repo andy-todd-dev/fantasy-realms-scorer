@@ -20,7 +20,8 @@ export type CardMatcher =
 export type EffectCondition =
   | { readonly present: CardMatcher }
   | { readonly absent: CardMatcher }
-  | { readonly allOf: readonly EffectCondition[] };
+  | { readonly allOf: readonly EffectCondition[] }
+  | { readonly anyOf: readonly EffectCondition[] };
 
 export type CardEffect =
   | {
@@ -40,6 +41,10 @@ export type CardEffect =
   | {
       readonly kind: "clearPenalty";
       readonly targets: readonly CardMatcher[];
+    }
+  | {
+      readonly kind: "clearPenaltySuitWord";
+      readonly suit: Suit;
     };
 
 export type CardAbility = {

@@ -1,4 +1,4 @@
-import { Card, CardEffect, CardMatcher, EffectCondition } from "./card";
+import { Card, CardEffect, CardMatcher, EffectCondition, Suit } from "./card";
 
 /*
   Rulebook, on the rules this file implements:
@@ -18,7 +18,7 @@ import { Card, CardEffect, CardMatcher, EffectCondition } from "./card";
   even if another card would blank it."
 
   Our interpretation of how these fit together, so scoring runs in this order:
-  1. Clear penalties.
+  1. Clear penalties, and suit words from penalties.
   2. Apply blanks that target other cards, all at once across the whole hand.
   3. Check self-blanks, all at once, against the cards left after step 2.
   4. Add up points using only the cards left after step 3.
@@ -65,6 +65,81 @@ function withoutClearedPenalties(cards: readonly Card[]): readonly Card[] {
   });
 }
 
+// Checks if a matcher names the specified suit. A matcher naming a specific card doesn't count, even if that card is of the suit.
+function namesSuit(matcher: CardMatcher, suit: Suit): boolean {
+  return "suit" in matcher && matcher.suit === suit;
+}
+
+// Checks if a condition, or any part of it, names the specified suit.
+function conditionNamesSuit(condition: EffectCondition, suit: Suit): boolean {
+  if ("allOf" in condition) {
+    return condition.allOf.some((part) => conditionNamesSuit(part, suit));
+  }
+
+  if ("anyOf" in condition) {
+    return condition.anyOf.some((part) => conditionNamesSuit(part, suit));
+  }
+
+  return namesSuit(
+    "present" in condition ? condition.present : condition.absent,
+    suit,
+  );
+}
+
+// Removes a suit from penalty effects. A blank keeps its other targets. An effect that counts the suit, or whose condition names it, no longer applies at all.
+function withoutPenaltySuitWord(
+  effects: readonly CardEffect[],
+  suit: Suit,
+): readonly CardEffect[] {
+  return effects.flatMap((effect): readonly CardEffect[] => {
+    if (effect.kind === "blank") {
+      return [
+        {
+          ...effect,
+          targets: effect.targets.filter((target) => !namesSuit(target, suit)),
+        },
+      ];
+    }
+
+    if (effect.kind === "points" && effect.per && namesSuit(effect.per, suit)) {
+      return [];
+    }
+
+    if (
+      (effect.kind === "points" || effect.kind === "blankSelf") &&
+      effect.when &&
+      conditionNamesSuit(effect.when, suit)
+    ) {
+      return [];
+    }
+
+    return [effect];
+  });
+}
+
+// Removes suit words from penalties, which is clearing part of a penalty. Like other clearing, this looks at the full hand, so a card that is later blanked still clears.
+function withoutClearedPenaltySuitWords(cards: readonly Card[]): readonly Card[] {
+  return cards.map((card) => {
+    const { penalty } = card;
+
+    if (!penalty) {
+      return card;
+    }
+
+    const effects = othersIn(cards, card)
+      .flatMap((other) => other.bonus?.effects ?? [])
+      .reduce(
+        (remaining, effect) =>
+          effect.kind === "clearPenaltySuitWord"
+            ? withoutPenaltySuitWord(remaining, effect.suit)
+            : remaining,
+        penalty.effects,
+      );
+
+    return { ...card, penalty: { ...penalty, effects } };
+  });
+}
+
 // Checks if the specified card is blanked by any other card in the hand. Blanking is simultaneous, so this looks at the full hand, including cards that are themselves blanked.
 function isBlanked(card: Card, cards: readonly Card[]): boolean {
   return othersIn(cards, card).some((other) =>
@@ -85,13 +160,17 @@ function blanksItself(card: Card, others: readonly Card[]): boolean {
   );
 }
 
-// Checks if the specified effect condition holds true based on the other cards in the hand. A condition can require the presence or absence of a specific card or suit, or that all of several conditions hold.
+// Checks if the specified effect condition holds true based on the other cards in the hand. A condition can require the presence or absence of a specific card or suit, or that all or any of several conditions hold.
 function conditionHolds(
   condition: EffectCondition,
   others: readonly Card[],
 ): boolean {
   if ("allOf" in condition) {
     return condition.allOf.every((part) => conditionHolds(part, others));
+  }
+
+  if ("anyOf" in condition) {
+    return condition.anyOf.some((part) => conditionHolds(part, others));
   }
 
   return "present" in condition
@@ -124,7 +203,7 @@ function effectPoints(effect: CardEffect, others: readonly Card[]): number {
 export function calculateScore(cards: readonly Card[]): number {
 
   // Clearing takes place before any penalties are applied
-  const cleared = withoutClearedPenalties(cards);
+  const cleared = withoutClearedPenaltySuitWords(withoutClearedPenalties(cards));
 
   // Blanking takes place simultaneously
   const notBlankedByOthers = cleared.filter((card) => !isBlanked(card, cleared));

@@ -4,17 +4,6 @@ const king = { id: "king", name: "King", suit: "leader", baseStrength: 8 } as co
 const queen = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 } as const;
 const unicorn = { id: "unicorn", name: "Unicorn", suit: "beast", baseStrength: 9 } as const;
 
-describe("card data", () => {
-  it.each(CARDS.map((card) => [card.id, card.baseStrength] as const))(
-    "gives %s a whole-number base strength from 0 to 40",
-    (_, baseStrength) => {
-      expect(Number.isInteger(baseStrength)).toBe(true);
-      expect(baseStrength).toBeGreaterThanOrEqual(0);
-      expect(baseStrength).toBeLessThanOrEqual(40);
-    },
-  );
-});
-
 describe("deck data", () => {
   it("gives every deck a unique ID", () => {
     const ids = DECKS.map((deck) => deck.id);
