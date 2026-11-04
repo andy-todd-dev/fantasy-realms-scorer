@@ -5,12 +5,6 @@ const queen = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 } as
 const unicorn = { id: "unicorn", name: "Unicorn", suit: "beast", baseStrength: 9 } as const;
 
 describe("card data", () => {
-  it("gives every card a unique ID", () => {
-    const ids = CARDS.map((card) => card.id);
-
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
   it.each(CARDS.map((card) => [card.id, card.baseStrength] as const))(
     "gives %s a whole-number base strength from 0 to 40",
     (_, baseStrength) => {
@@ -44,12 +38,6 @@ describe("InMemoryCardCatalog", () => {
 
   it("returns only the default deck's cards, without their deck ID", async () => {
     await expect(catalog.getAll()).resolves.toEqual([king, queen]);
-  });
-
-  it("serves the sample cards by default", async () => {
-    const cards = await new InMemoryCardCatalog().getAll();
-
-    expect(cards.map((card) => card.id)).toEqual(["king", "queen", "basilisk"]);
   });
 
   it("returns cards by ID in the order requested", async () => {

@@ -1,44 +1,18 @@
 import type { Card, CardId } from "../../domain/card";
 import type { Deck, DeckId } from "../../domain/deck";
+import { BASE_DECK, BASE_DECK_CARDS } from "./decks/base.cards";
 
 type CatalogCard = Card & {
   readonly deckId: DeckId;
 };
 
-const DEFAULT_DECK: Deck = {
-  id: "base",
-  name: "Base game",
-};
+const DEFAULT_DECK = BASE_DECK;
 
-export const DECKS: readonly Deck[] = [DEFAULT_DECK];
+export const DECKS: readonly Deck[] = [BASE_DECK];
 
-// Sample cards: values and wording are placeholders until the full list is added.
-export const CARDS: readonly CatalogCard[] = [
-  {
-    deckId: "base",
-    id: "king",
-    name: "King",
-    suit: "leader",
-    baseStrength: 8,
-    bonus: { text: "+5 for each Army. OR +20 for each Army if with Queen." },
-  },
-  {
-    deckId: "base",
-    id: "queen",
-    name: "Queen",
-    suit: "leader",
-    baseStrength: 6,
-    bonus: { text: "+5 for each Army. OR +20 for each Army if with King." },
-  },
-  {
-    deckId: "base",
-    id: "basilisk",
-    name: "Basilisk",
-    suit: "beast",
-    baseStrength: 35,
-    penalty: { text: "BLANKS all Armies, Leaders, and other Beasts." },
-  },
-];
+export const CARDS: readonly CatalogCard[] = Object.entries(BASE_DECK_CARDS).map(
+  ([id, definition]) => ({ deckId: BASE_DECK.id, id, ...definition }),
+);
 
 export class InMemoryCardCatalog {
   private readonly cards: readonly Card[];
