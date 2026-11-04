@@ -1,6 +1,6 @@
 ---
 name: add-card
-description: Add a Fantasy Realms card to this app, or correct an existing one, by translating its printed bonus and penalty text into the scoring engine's effect model, extending the engine if needed, and testing the scores. Use this whenever the user wants to add, enter, implement or fix a card, deck entry, bonus, penalty, BLANKS or CLEARS effect, even if they only paste card text or a card photo without saying "add", or complain that a card scores wrongly.
+description: Add a Fantasy Realms card to this app, or correct an existing one, by translating its printed bonus and penalty text into the scoring engine's effect model, extending the engine if needed, and testing any new mechanics. Use this whenever the user wants to add, enter, implement or fix a card, deck entry, bonus, penalty, BLANKS or CLEARS effect, even if they only paste card text or a card photo without saying "add", or complain that a card scores wrongly.
 ---
 
 # Add a card
@@ -59,14 +59,14 @@ Edit `src/infrastructure/driven/decks/base.cards.ts`:
 
 Normal cards need no UI or Redux changes: `LoadCardsUseCase` passes only `text` on to the UI, and sections are built from the card's suit.
 
-**A rule naming a card that isn't in the deck yet.** `card("x")` won't compile until `x` is defined. Ask the user which they want:
+**A rule naming a card that isn't in the deck yet.** `card("x")` won't compile until `x` is defined. Unless the user has given you its printed details, add a placeholder without asking:
 
-- **The real card:** get its printed details and add it as well.
-- **A placeholder:** add an entry with a name, base strength and suit only, and no rules, so the rule can be built and tested now. The user may leave the values to you. Pick arbitrary ones that don't pretend to be the printed values, and use suit `wild` so the tile lists last and doesn't move others. Add a comment saying it's a placeholder and what to replace, and list it in your report, because it's selectable in the app until replaced.
+- **A placeholder:** add an entry with a name, base strength and suit only, and no rules, so the rule can be built now. Pick arbitrary values that don't pretend to be the printed ones, and use suit `wild` so the tile lists last and doesn't move others. Add a comment saying it's a placeholder and what to replace, and list it in your report, because it's selectable in the app until replaced.
+- **The real card:** if the user has given you its printed details, add it as well.
 
 Don't write a raw `{ cardId: "x" }` to get past the compiler: it type-checks but never matches, so an `absent` condition is always true and a `present` one never is.
 
-**The card already exists as a placeholder.** Replace its entry with the printed details, remove the placeholder comment, and update any tests whose scores relied on the placeholder's values.
+**The card already exists as a placeholder.** Replace its entry with the printed details, and remove the placeholder comment.
 
 ## 6. Check the existing cards
 
@@ -76,51 +76,22 @@ A new card changes how others score. Look through the deck for:
 - cards that blank its suit, and whether this card blanks theirs
 - `absent` conditions that this card now switches off, and `present` ones it now switches on
 
-Add a test for each real interaction you find.
+List what you find in your report. If it shows two mechanics interacting in a way that step 7 doesn't already cover, it needs a test as that step describes.
 
-## 7. Test with hand-worked scores
+## 7. Test new mechanics only
 
-Scoring tests for real cards go in `src/card-scoring.test.ts`, which you should create if it doesn't exist. It sits at the `src/` root because ESLint rules out the alternatives: the driven layer can't call domain functions, and the domain and application layers can't import infrastructure.
+Don't write tests for individual cards. Scoring tests must not use real cards or the deck, and a card built only from mechanics the engine already has and tests needs no new test.
 
-Build the use case directly, as below, rather than going through `createUseCases()`. Jest can't load `composition-root.ts`, because it resolves Awilix to an ES module build it doesn't transform. Don't change the Jest config to get around this unless the user asks. These tests still cover the real card data, catalog and use case.
+Add tests only for:
 
-```ts
-import { ScoreHandUseCase } from "./application/score-hand.usecase";
-import {
-  CARDS,
-  InMemoryCardCatalog,
-} from "./infrastructure/driven/in-memory-card-catalog";
+- **A new mechanic:** a new effect kind, condition or engine rule.
+- **A new interaction between mechanics:** for example, a clear keeping a self-blanking card in play so that it counts for other cards. Look through `src/domain/score.test.ts` first, because the interaction may already be covered.
 
-const score = (...cardIds: string[]) =>
-  new ScoreHandUseCase({ cardCatalog: new InMemoryCardCatalog() }).execute(cardIds);
+These tests go in `src/domain/score.test.ts`, using its synthetic cards (`card("subject", "wizard", 1, [...])`). Test the case where the mechanic applies and the case where it doesn't. Work out each expected score by hand from the rule, and show the sum in a comment, rather than running the code and pasting in the result.
 
-describe("knights", () => {
-  it("takes the penalty without a Leader", async () => {
-    await expect(score("knights")).resolves.toBe(12); // 20 - 8
-  });
+Maestro flows can include one or two hands through real cards, but only to test the wiring, not to exercise scoring. Don't add any unless the user asks.
 
-  it("avoids the penalty with a Leader", async () => {
-    await expect(score("knights", "king")).resolves.toBe(33); // 20 + (8 + 5 per Army)
-  });
-});
-```
-
-**A rule about a suit with no cards in the deck yet.** Pass stand-in cards to the catalog inside the test, so they never reach the real deck, and name them so it's clear they should be replaced later:
-
-```ts
-const aWizard = { deckId: "base", id: "a-wizard", name: "A Wizard", suit: "wizard", baseStrength: 5 } as const;
-
-const scoreWith = (extraCards: typeof CARDS, ...cardIds: string[]) =>
-  new ScoreHandUseCase({
-    cardCatalog: new InMemoryCardCatalog([...CARDS, ...extraCards]),
-  }).execute(cardIds);
-```
-
-Stand-ins are only for suits. A rule naming a specific card needs that card in the deck, real or placeholder, as step 5 explains.
-
-For each clause, test the case where it applies and the case where it doesn't. Also test the interactions from step 6.
-
-Work out each expected score by hand from the printed text, and show the sum in a comment. Don't run the code and paste in the result, since that only proves the code does what it does.
+With no card-level tests, nothing checks a card's data against the printed text. The mapping you show the user in step 3 and `tsc` in step 8 are the checks, so copy numbers carefully and flag anything you changed from what the user gave you.
 
 ## 8. Verify
 
@@ -132,7 +103,7 @@ npm run lint
 npm test
 ```
 
-`tsc` is the one that's easy to forget, and it matters: Jest runs through Babel and doesn't type-check, so a misspelled suit or a card missing from `BaseCardId` can pass every test.
+`tsc` is the one that's easy to forget, and it matters: Jest runs through Babel and doesn't type-check, so nothing else catches a misspelled suit or a card missing from `BaseCardId`.
 
 Don't install the app or run Maestro unless the user asks. Do check `.maestro/select-card.yaml` by eye: cards are listed by suit, so a new card can push a tile the flow taps off-screen, and flows asserting a score could change.
 
@@ -141,7 +112,7 @@ Don't install the app or run Maestro unless the user asks. Do check `.maestro/se
 Keep it short, and include:
 
 - the clause-to-effect mapping
-- the worked scores you tested
+- any generic tests you added, or that the card needed none because it uses existing mechanics
 - any part of the card that can't trigger in the app yet, because the deck has no cards of the suit it needs
 - any assumption you made about the rules, and any behaviour from the reference's "engine behaviour" section that this card relies on
 - whether the Maestro flow may need attention

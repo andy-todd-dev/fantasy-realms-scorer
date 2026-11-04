@@ -17,13 +17,16 @@ Helpers are in `src/infrastructure/driven/decks/card-definitions.ts`. `card("x")
 | "+N if no X" | `points(N, { when: absent(suit("x")) })` |
 | "+A for each X. OR +B for each X if with Y" | `points(A, { per, when: absent(Y) })`, `points(B, { per, when: present(Y) })` |
 | "+N with both X and Y" | `points(N, { when: allOf(present(...), present(...)) })` |
+| "+N with X or Y" | `points(N, { when: anyOf(present(...), present(...)) })` (applies once, however many match) |
+| "+A with X, or +B with Y", where both could hold and X takes precedence | `points(A, { when: present(X) })`, `points(B, { when: allOf(absent(X), present(Y)) })` |
 | "BLANKS all X and Y" | `blank(suit("x"), suit("y"))` |
 | "BLANKS the named card" | `blank(card("x"))` |
 | "Blanked unless with X" | `blankSelf({ when: absent(suit("x")) })` |
 | "Blanked with any X" | `blankSelf({ when: present(suit("x")) })` |
 | "Clears the penalty on all X" | `clearPenalty(suit("x"))` |
+| "Clears the word X from all penalties" | `clearPenaltySuitWord("x")` (plurals in a card's text don't matter, because effects name the suit) |
 
-**"OR" needs care.** Effects don't exclude each other on their own: every effect whose condition holds is added. King and Queen work because `absent(Y)` and `present(Y)` can never both be true. An "OR" whose two conditions could both hold can't be modelled this way, so treat it as a gap.
+**"OR" needs care.** Effects don't exclude each other on their own: every effect whose condition holds is added. King and Queen work because `absent(Y)` and `present(Y)` can never both be true. When both conditions could hold, make them exclusive by adding `absent` of the clause that takes precedence to the other clause, as Unicorn does: its Princess clause beats its Empress, Queen, or Enchantress clause. Which clause takes precedence is a rules call, so ask if the card or the user hasn't settled it.
 
 **"with X" versus "for each X".** `when` applies once however many cards match. `per` scales with the count. Getting these confused produces plausible scores, so check it for every clause.
 
@@ -37,6 +40,7 @@ All of this comes from `src/domain/score.ts`:
 - **Blanks that target other cards are simultaneous.** A card that still blanks at that point blanks everything it targets, even if another card blanks it. If A blanks B and B blanks C, both B and C are blanked. If two cards blank each other, both are blanked, whatever order they're in.
 - **Self-blanks come after those.** Their conditions only see cards that other cards didn't blank, so a blanked Army can't save a card that needs one, and a blanked Weather can't blank a card that avoids it. They're all checked at once, so one self-blanked card can still satisfy another card's self-blank condition. A self-blanked card has already blanked its targets by then. This order is our interpretation of the rulebook, noted in `score.ts`.
 - **Clears apply before anything else, from the full hand.** The rulebook says clearing comes before any penalties are applied. So a cleared penalty can't blank the card that cleared it, and a clearer that's later blanked has still cleared. A cleared card keeps its suit, name, base strength and bonus. Only bonus-slot `clearPenalty` effects count, because the rulebook calls clearing a kind of bonus.
+- **`clearPenaltySuitWord` changes penalty effects, not card text.** It runs with the other clearing, from the full hand, on other cards' penalties only. A blank loses that target and keeps the rest. An effect that counts the suit, or whose condition names it anywhere, stops applying altogether. Matchers naming a specific card are untouched, even if that card is of the suit.
 - **Bonus and penalty score the same way, but only penalties can be cleared.** Keep each effect in the slot the card prints it in.
 - **Unknown effect kinds silently score 0.** `effectPoints` returns 0 for anything that isn't `points`, and `isBlanked` only looks at `blank`. A new kind compiles and does nothing until the engine handles it, which is why the test comes first.
 
@@ -46,9 +50,8 @@ Each of these goes through the propose-and-confirm step in `SKILL.md`.
 
 | Printed idea | What's missing |
 |---|---|
-| Clearing a word from penalties, rather than a whole penalty | `clearPenalty` removes the whole penalty slot |
+| Clearing a word from penalties that isn't a suit | `clearPenaltySuitWord` only removes a suit |
 | Exceptions: "all X except Y" | targets and matchers have no exclusion |
-| "with X or Y" | `allOf` needs every condition to hold; nothing covers either-or |
 | Whole-hand or threshold rules: all different suits, odd strengths, N of one suit, runs | conditions only ask whether a card matches, not about the hand as a whole |
 | Values read from other cards: "add the base strength of..." | `points` is a fixed number |
 | Changing identity: new suit or name, duplicating a card | `matches` reads a card's printed suit and ID |
@@ -62,7 +65,7 @@ Resolution order matters for several of these. An effect that changes what other
 For anything that doesn't need player input, the change stays in the domain:
 
 1. Add the variant or field to `CardEffect` in `src/domain/card.ts`. Keep it plain, serialisable data.
-2. Write failing tests in `src/domain/score.test.ts`, using its synthetic cards (`card("subject", "wizard", 1, [...])`) in a new `describe`. Cover the interactions with blanking, `per` and `when`, not just the simple case.
+2. Write failing tests in `src/domain/score.test.ts`, using its synthetic cards (`card("subject", "wizard", 1, [...])`) in a new `describe`, never real cards. Cover the interactions with blanking, `per` and `when`, not just the simple case.
 3. Implement it in `src/domain/score.ts`.
 4. Add a helper to `card-definitions.ts`. It may only use `import type` from the domain, because infrastructure can't call domain functions.
 
