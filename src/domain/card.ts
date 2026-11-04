@@ -13,8 +13,29 @@ export type Suit =
   | "flame"
   | "wild";
 
-export type CardEffect = {
+export type CardMatcher =
+  | { readonly suit: Suit }
+  | { readonly cardId: CardId };
+
+export type EffectCondition =
+  | { readonly present: CardMatcher }
+  | { readonly absent: CardMatcher };
+
+export type CardEffect =
+  | {
+      readonly kind: "points";
+      readonly points: number;
+      readonly per?: CardMatcher;
+      readonly when?: EffectCondition;
+    }
+  | {
+      readonly kind: "blank";
+      readonly targets: readonly CardMatcher[];
+    };
+
+export type CardAbility = {
   readonly text: string;
+  readonly effects: readonly CardEffect[];
 };
 
 export type Card = {
@@ -22,6 +43,6 @@ export type Card = {
   readonly name: string;
   readonly suit: Suit;
   readonly baseStrength: number;
-  readonly bonus?: CardEffect;
-  readonly penalty?: CardEffect;
+  readonly bonus?: CardAbility;
+  readonly penalty?: CardAbility;
 };

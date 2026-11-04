@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { Card } from "../../../domain/card";
+import type { CardView } from "../../../application/load-cards.usecase";
 import { createAppAsyncThunk } from "./create-app-async-thunk";
 
 type CardsState = {
-  items: Card[];
+  items: CardView[];
   status: "idle" | "loading" | "loaded" | "failed";
 };
 
