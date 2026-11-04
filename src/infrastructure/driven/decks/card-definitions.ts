@@ -18,6 +18,10 @@ export const absent = (matcher: CardMatcher): EffectCondition => ({
   absent: matcher,
 });
 
+export const allOf = (...conditions: EffectCondition[]): EffectCondition => ({
+  allOf: conditions,
+});
+
 export const points = (
   amount: number,
   options: { per?: CardMatcher; when?: EffectCondition } = {},
@@ -25,5 +29,15 @@ export const points = (
 
 export const blank = (...targets: CardMatcher[]): CardEffect => ({
   kind: "blank",
+  targets,
+});
+
+export const blankSelf = ({ when }: { when: EffectCondition }): CardEffect => ({
+  kind: "blankSelf",
+  when,
+});
+
+export const clearPenalty = (...targets: CardMatcher[]): CardEffect => ({
+  kind: "clearPenalty",
   targets,
 });
