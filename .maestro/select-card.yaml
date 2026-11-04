@@ -2,65 +2,70 @@ appId: dev.andytodd.fantasyrealmsscorer
 ---
 - runFlow: subflows/open-app.yaml
 
-# Cards load through the real wiring, and the hand starts empty.
+# The hand starts empty and is scored through the real wiring.
 # The long wait covers Metro's first bundle on debug builds.
 - extendedWaitUntil:
     visible:
-      id: card-option-king
+      id: pick-cards
     timeout: 60000
-- assertVisible:
-    id: card-option-queen
 - assertVisible: "No cards selected."
-- assertVisible: "Score: 0"
+- assertVisible:
+    id: hand-score
+    text: "0"
 
-# Tapping King shows its details without adding it to the hand
-- tapOn:
-    id: card-option-king
+# Features that aren't implemented yet are disabled
 - assertVisible:
-    id: card-details-king
-- assertVisible: "Base strength: 8"
-- assertVisible: "No cards selected."
-
-# Adding King puts it in the hand and disables the button
-- tapOn:
-    id: add-to-hand-king
+    id: new-hand
+    enabled: false
 - assertVisible:
-    id: hand-card-king
-- assertNotVisible: "No cards selected."
-- assertVisible: "Score: 8"
+    id: show-calculation
+    enabled: false
 - assertVisible:
-    id: add-to-hand-king
+    id: scan-hand
     enabled: false
 
-# Tapping the button again does nothing
+# Cards load through the real wiring
 - tapOn:
-    id: add-to-hand-king
-- assertNotVisible:
-    id: hand-card-king
-    index: 1
-
-# Tapping Queen closes King's details and opens Queen's
-- tapOn:
-    id: card-option-queen
-- assertNotVisible:
-    id: card-details-king
+    id: pick-cards
 - assertVisible:
-    id: card-details-queen
+    id: card-tile-king
+- assertVisible:
+    id: card-tile-queen
+- assertVisible: "0 of 7"
+- assertVisible: "Tap 7 more cards"
+- assertVisible:
+    id: pick-scan
+    enabled: false
 
-# Adding Queen puts it after King
+# Tapping King adds it and stays on the picker
 - tapOn:
-    id: add-to-hand-queen
+    id: card-tile-king
+- assertVisible:
+    id: hand-chip-king
+- assertVisible: "1 of 7"
+- assertVisible: "Tap 6 more cards"
+
+# Removing isn't implemented yet, so tapping King again does nothing
+- assertVisible:
+    id: card-tile-king
+    enabled: false
+- tapOn:
+    id: card-tile-king
+- assertVisible: "1 of 7"
+
+# Adding Queen puts it after King in the hand
+- tapOn:
+    id: card-tile-queen
+- assertVisible: "2 of 7"
+- tapOn:
+    id: back-to-hand
 - assertVisible:
     id: hand-card-queen
     below:
       id: hand-card-king
-- assertVisible: "Score: 14"
 - assertVisible:
-    id: add-to-hand-queen
+    id: hand-score
+    text: "14"
+- assertVisible:
+    id: remove-card-king
     enabled: false
-
-# Tapping Queen again closes its details
-- tapOn:
-    id: card-option-queen
-- assertNotVisible:
-    id: card-details-queen

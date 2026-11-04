@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Score breakdown</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#E3B75B}a:hover{color:#F0CD82}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #141821; color: #EDE9E0; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="display: flex; align-items: center; gap: 4px; padding: 16px 12px 4px">
+    <a href="Main.dc.html" aria-label="Back to hand" style="width: 44px; height: 44px; color: #EDE9E0; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex: 1; font-family: Marcellus, Georgia, serif; font-size: 22px; font-weight: 400">How 148 was scored</h1>
+  </header>
+
+  <div style="margin: 8px 16px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+    <div style="padding: 10px 12px; border-radius: 12px; background: #1E2430"><p style="margin: 0; font-size: 12px; color: #A9B0BD">Base</p><p style="margin: 2px 0 0; font-size: 20px; font-weight: 600">52</p></div>
+    <div style="padding: 10px 12px; border-radius: 12px; background: #1E2430"><p style="margin: 0; font-size: 12px; color: #A9B0BD">Bonuses</p><p style="margin: 2px 0 0; font-size: 20px; font-weight: 600; color: #9DD49A">+96</p></div>
+    <div style="padding: 10px 12px; border-radius: 12px; background: #1E2430"><p style="margin: 0; font-size: 12px; color: #A9B0BD">Penalties</p><p style="margin: 2px 0 0; font-size: 20px; font-weight: 600">0</p></div>
+  </div>
+
+  <ol style="list-style: none; margin: 14px 0 0; padding: 0 16px 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+      <li style="padding: 12px 14px; border-radius: 14px; background: #1A1F2A; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 5px; background: {{r.color}}"></span>
+          <span style="flex: 1; font-size: 16px; font-weight: 600">{{r.name}} <span style="font-weight: 400; font-size: 12px; color: #A9B0BD">{{r.suit}}</span></span>
+          <span style="font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; color: {{accent}}">{{r.total}}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #C9CED8; padding-left: 20px"><span>Base strength</span><span style="font-variant-numeric: tabular-nums">{{r.base}}</span></div>
+        <sc-if value="{{r.bonus}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding-left: 20px"><span style="color: #C9CED8; line-height: 1.4">{{r.why}}</span><span style="color: #9DD49A; font-variant-numeric: tabular-nums; flex: none">{{r.bonus}}</span></div>
+        </sc-if>
+        <sc-if value="{{r.note}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding-left: 20px; font-size: 12px; color: #A9B0BD; line-height: 1.4">{{r.note}}</p>
+        </sc-if>
+      </li>
+    </sc-for>
+  </ol>
+
+  <footer style="padding: 14px 20px 28px; border-top: 1px solid #232A38; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <span style="font-size: 15px; color: #C9CED8">52 + 96 − 0</span>
+      <span style="font-family: Marcellus, Georgia, serif; font-size: 34px; color: {{accent}}">148</span>
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #A9B0BD">Blanked cards: none</p>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E3B75B","options":["#E3B75B","#7FC4E8","#9DD49A"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#E3B75B',
+      rows: [
+        { name: 'Unicorn', suit: 'Beast', color: '#6FAF6B', base: 9, bonus: '+30', why: 'With Princess', total: 39, note: '' },
+        { name: 'Rangers', suit: 'Army', color: '#D27A68', base: 5, bonus: '+20', why: '+10 × 2 Lands (Bell Tower, Mountain)', total: 25, note: '' },
+        { name: 'Bell Tower', suit: 'Land', color: '#C39A6B', base: 8, bonus: '+15', why: 'With a Wizard (Enchantress)', total: 23, note: '' },
+        { name: 'Enchantress', suit: 'Wizard', color: '#9B8BEA', base: 5, bonus: '+15', why: '+5 × 3 (Bell Tower, Mountain, Island)', total: 20, note: '' },
+        { name: 'Princess', suit: 'Leader', color: '#E3B75B', base: 2, bonus: '+16', why: '+8 × 2 (Rangers, Enchantress)', total: 18, note: '' },
+        { name: 'Island', suit: 'Flood', color: '#5AAEDB', base: 14, bonus: '', why: '', total: 14, note: 'No penalties in hand to clear.' },
+        { name: 'Mountain', suit: 'Land', color: '#C39A6B', base: 9, bonus: '', why: '', total: 9, note: 'Bonus needs Smoke and Wildfire, not in hand.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

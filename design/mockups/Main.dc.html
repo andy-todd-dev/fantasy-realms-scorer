@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hand and score</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#E3B75B}a:hover{color:#F0CD82}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #141821; color: #EDE9E0; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 8px">
+    <h1 style="margin: 0; font-family: Marcellus, Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: 0.02em">Realm Scorer</h1>
+    <a href="Scan.dc.html" style="min-height: 44px; padding: 0 14px; border: 1px solid #3A4252; border-radius: 22px; color: #EDE9E0; text-decoration: none; font: 500 14px Inter, sans-serif; display: flex; align-items: center; gap: 6px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
+      New hand
+    </a>
+  </header>
+
+  <section aria-label="Total score" style="margin: 8px 16px 0; padding: 20px; background: #1E2430; border: 1px solid #2C3343; border-radius: 20px; display: flex; flex-direction: column; gap: 4px">
+    <p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A9B0BD">Total score</p>
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <p style="margin: 0; font-family: Marcellus, Georgia, serif; font-size: 72px; line-height: 1; color: {{accent}}">148</p>
+      <p style="margin: 0; font-size: 14px; color: #A9B0BD">7 of 7 cards</p>
+    </div>
+    <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 13px; color: #C9CED8">
+      <span>Base 52</span><span>Bonuses +96</span><span>Penalties 0</span>
+    </div>
+    <a href="Breakdown.dc.html" style="margin-top: 14px; min-height: 44px; border-radius: 12px; background: #2A3242; color: #EDE9E0; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px">
+      Show calculation
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+  </section>
+
+  <section aria-label="Your hand" style="flex: 1; display: flex; flex-direction: column; padding: 18px 16px 0; min-height: 0">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 8px">
+      <h2 style="margin: 0; font-family: Marcellus, Georgia, serif; font-size: 18px; font-weight: 400">Your hand</h2>
+      <span style="font-size: 13px; color: #A9B0BD">Points per card</span>
+    </div>
+    <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="7">
+        <li style="min-height: 52px; padding: 0 12px; border-radius: 12px; background: #1A1F2A; display: flex; align-items: center; gap: 12px">
+          <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 5px; flex: none; background: {{c.color}}"></span>
+          <div style="flex: 1; display: flex; flex-direction: column">
+            <span style="font-size: 16px; font-weight: 500">{{c.name}}</span>
+            <span style="font-size: 12px; color: #A9B0BD">{{c.suit}}</span>
+          </div>
+          <span style="font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums">{{c.pts}}</span>
+          <button type="button" aria-label="Remove {{c.name}}" style="width: 44px; height: 44px; margin-right: -8px; border: 0; background: transparent; color: #8D95A3; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </li>
+      </sc-for>
+    </ul>
+  </section>
+
+  <nav aria-label="Change cards" style="padding: 12px 16px 28px; display: flex; gap: 10px; background: #141821; border-top: 1px solid #232A38">
+    <a href="Scan.dc.html" style="flex: 1; min-height: 56px; border-radius: 14px; background: {{accent}}; color: #1A1408; text-decoration: none; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+      Scan hand
+    </a>
+    <a href="AddCard.dc.html" style="min-height: 56px; padding: 0 18px; border-radius: 14px; border: 1px solid #3A4252; color: #EDE9E0; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+      Pick
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E3B75B","options":["#E3B75B","#7FC4E8","#9DD49A"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#E3B75B',
+      cards: [
+        { name: 'Unicorn', suit: 'Beast', color: '#6FAF6B', pts: 39 },
+        { name: 'Rangers', suit: 'Army', color: '#D27A68', pts: 25 },
+        { name: 'Bell Tower', suit: 'Land', color: '#C39A6B', pts: 23 },
+        { name: 'Enchantress', suit: 'Wizard', color: '#9B8BEA', pts: 20 },
+        { name: 'Princess', suit: 'Leader', color: '#E3B75B', pts: 18 },
+        { name: 'Island', suit: 'Flood', color: '#5AAEDB', pts: 14 },
+        { name: 'Mountain', suit: 'Land', color: '#C39A6B', pts: 9 }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,21 +1,22 @@
 import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
-import { cardDetailsToggled } from "./card-details-slice";
 import { loadCards } from "./cards-slice";
 import { addCardToHand } from "./hand-slice";
+import { screenOpened } from "./navigation-slice";
 import { scoreHand } from "./score-slice";
 import {
-  selectCardOptions,
+  selectCardSections,
   selectCardsStatus,
   selectHandCards,
+  selectHandProgress,
   selectScore,
+  selectScreen,
 } from "./selectors";
 import { createAppStore } from "./store";
 
 const king: Card = { id: "king", name: "King", suit: "leader", baseStrength: 8 };
 const queen: Card = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 };
-
-const closedOption = { canAddToHand: true, isDetailsOpen: false };
+const knights: Card = { id: "knights", name: "Knights", suit: "army", baseStrength: 20 };
 
 function createStore(
   loadCardsExecute: () => Promise<Card[]>,
@@ -33,19 +34,28 @@ function createStore(
 }
 
 async function createLoadedStore() {
-  const store = createStore(async () => [king, queen]);
+  const store = createStore(async () => [king, queen, knights]);
   await store.dispatch(loadCards());
   return store;
 }
 
 describe("loading cards", () => {
-  it("offers the loaded cards with their details closed", async () => {
+  it("offers the loaded cards as unselected tiles", async () => {
     const store = await createLoadedStore();
 
     expect(selectCardsStatus(store.getState())).toBe("loaded");
-    expect(selectCardOptions(store.getState())).toEqual([
-      { ...king, ...closedOption },
-      { ...queen, ...closedOption },
+    expect(selectCardSections(store.getState())).toEqual([
+      {
+        suit: "army",
+        cards: [{ id: "knights", name: "Knights", selected: false }],
+      },
+      {
+        suit: "leader",
+        cards: [
+          { id: "king", name: "King", selected: false },
+          { id: "queen", name: "Queen", selected: false },
+        ],
+      },
     ]);
   });
 
@@ -58,68 +68,17 @@ describe("loading cards", () => {
   });
 });
 
-describe("toggling card details", () => {
-  it("opens the card's details without changing the hand", async () => {
-    const store = await createLoadedStore();
-
-    store.dispatch(cardDetailsToggled("king"));
-
-    expect(selectCardOptions(store.getState())).toEqual([
-      { ...king, canAddToHand: true, isDetailsOpen: true },
-      { ...queen, ...closedOption },
-    ]);
-    expect(selectHandCards(store.getState())).toEqual([]);
-  });
-
-  it("closes the details when the same card is toggled again", async () => {
-    const store = await createLoadedStore();
-
-    store.dispatch(cardDetailsToggled("king"));
-    store.dispatch(cardDetailsToggled("king"));
-
-    expect(selectCardOptions(store.getState())).toEqual([
-      { ...king, ...closedOption },
-      { ...queen, ...closedOption },
-    ]);
-  });
-
-  it("keeps only one card open at a time", async () => {
-    const store = await createLoadedStore();
-
-    store.dispatch(cardDetailsToggled("king"));
-    store.dispatch(cardDetailsToggled("queen"));
-
-    expect(selectCardOptions(store.getState())).toEqual([
-      { ...king, ...closedOption },
-      { ...queen, canAddToHand: true, isDetailsOpen: true },
-    ]);
-  });
-});
-
 describe("adding a card to the hand", () => {
-  it("adds the card and stops it being added again", async () => {
+  it("adds the card and marks its tile as selected", async () => {
     const store = await createLoadedStore();
 
     await store.dispatch(addCardToHand("king"));
 
     expect(selectHandCards(store.getState())).toEqual([king]);
-    expect(selectCardOptions(store.getState())).toEqual([
-      { ...king, canAddToHand: false, isDetailsOpen: false },
-      { ...queen, ...closedOption },
+    expect(selectCardSections(store.getState())[1].cards).toEqual([
+      { id: "king", name: "King", selected: true },
+      { id: "queen", name: "Queen", selected: false },
     ]);
-  });
-
-  it("leaves the card's details open", async () => {
-    const store = await createLoadedStore();
-
-    store.dispatch(cardDetailsToggled("king"));
-    await store.dispatch(addCardToHand("king"));
-
-    expect(selectCardOptions(store.getState())[0]).toEqual({
-      ...king,
-      canAddToHand: false,
-      isDetailsOpen: true,
-    });
   });
 
   it("keeps cards in the order they were added and ignores duplicates", async () => {
@@ -201,5 +160,89 @@ describe("scoring the hand", () => {
     await store.dispatch(scoreHand());
 
     expect(selectScore(store.getState())).toBeNull();
+  });
+});
+
+describe("navigation", () => {
+  it("starts on the hand screen and moves between screens", async () => {
+    const store = await createLoadedStore();
+
+    expect(selectScreen(store.getState())).toBe("hand");
+
+    store.dispatch(screenOpened("pickCards"));
+
+    expect(selectScreen(store.getState())).toBe("pickCards");
+
+    store.dispatch(screenOpened("hand"));
+
+    expect(selectScreen(store.getState())).toBe("hand");
+  });
+});
+
+describe("tracking progress towards a full hand", () => {
+  const deck: Card[] = Array.from({ length: 8 }, (_, index) => ({
+    id: `card-${index}`,
+    name: `Card ${index}`,
+    suit: "beast",
+    baseStrength: 1,
+  }));
+
+  async function createStoreWithHandOf(size: number) {
+    const store = createStore(async () => deck);
+    await store.dispatch(loadCards());
+    for (const card of deck.slice(0, size)) {
+      await store.dispatch(addCardToHand(card.id));
+    }
+    return store;
+  }
+
+  it("reports an empty hand", async () => {
+    const store = await createStoreWithHandOf(0);
+
+    expect(selectHandProgress(store.getState())).toEqual({
+      count: 0,
+      remaining: 7,
+      isComplete: false,
+      countLabel: "0 of 7",
+      longCountLabel: "0 of 7 cards",
+    });
+  });
+
+  it("is complete at 7 cards", async () => {
+    const store = await createStoreWithHandOf(7);
+
+    expect(selectHandProgress(store.getState())).toEqual({
+      count: 7,
+      remaining: 0,
+      isComplete: true,
+      countLabel: "7 of 7",
+      longCountLabel: "7 of 7 cards",
+    });
+  });
+
+  it("allows an 8th card, and changes the wording rather than saying 8 of 7", async () => {
+    const store = await createStoreWithHandOf(8);
+
+    expect(selectHandProgress(store.getState())).toEqual({
+      count: 8,
+      remaining: 0,
+      isComplete: true,
+      countLabel: "8 cards",
+      longCountLabel: "8 cards",
+    });
+  });
+});
+
+describe("ordering the card sections", () => {
+  it("follows the design's suit order, not the catalogue's", async () => {
+    const wild: Card = { id: "mirage", name: "Mirage", suit: "wild", baseStrength: 0 };
+    const store = createStore(async () => [wild, king, knights]);
+    await store.dispatch(loadCards());
+
+    expect(selectCardSections(store.getState()).map(({ suit }) => suit)).toEqual([
+      "army",
+      "leader",
+      "wild",
+    ]);
   });
 });

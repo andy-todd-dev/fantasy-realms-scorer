@@ -5,7 +5,7 @@ export type Suit =
   | "leader"
   | "wizard"
   | "weapon"
-  | "artefact"
+  | "artifact"
   | "beast"
   | "land"
   | "weather"

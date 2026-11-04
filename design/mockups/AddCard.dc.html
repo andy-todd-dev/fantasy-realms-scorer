@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pick your cards</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#E3B75B}a:hover{color:#F0CD82}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #141821; color: #EDE9E0; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="display: flex; align-items: center; gap: 4px; padding: 16px 12px 6px">
+    <a href="Main.dc.html" aria-label="Back to hand" style="width: 44px; height: 44px; color: #EDE9E0; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex: 1; font-family: Marcellus, Georgia, serif; font-size: 22px; font-weight: 400">Pick your cards</h1>
+    <a href="Scan.dc.html" style="min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid #3A4252; color: #EDE9E0; text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+      Scan
+    </a>
+  </header>
+  <p style="margin: 0 20px 8px; font-size: 13px; color: #A9B0BD">Tap a card to add it. Tap again to remove it.</p>
+
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px">
+    <sc-for list="{{sections}}" as="s" hint-placeholder-count="11">
+      <section aria-label="{{s.label}}" style="display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #C9CED8">
+          <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 5px; background: {{s.color}}"></span>
+          {{s.label}}
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{s.cards}}" as="c" hint-placeholder-count="5">
+            <button type="button" aria-pressed="{{c.pressed}}" onClick="{{c.toggle}}" style="position: relative; min-height: 48px; padding: 6px 8px; border-radius: 10px; border: 1.5px solid {{c.border}}; background: {{c.bg}}; color: #EDE9E0; font: 500 13px/1.25 Inter, sans-serif; text-align: left; display: flex; align-items: center">
+              <span style="padding-right: 14px">{{c.name}}</span>
+              <sc-if value="{{c.on}}" hint-placeholder-val="{{ false }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; top: 6px; right: 6px"><path d="M5 12l5 5 9-10"></path></svg>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+
+  <section aria-label="Your hand so far" style="padding: 12px 16px 28px; background: #1A1F2A; border-top: 1px solid #2C3343; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <h2 style="margin: 0; font-family: Marcellus, Georgia, serif; font-size: 17px; font-weight: 400">Your hand</h2>
+      <span style="font-size: 14px; font-weight: 600; color: {{accent}}">{{count}} of 7</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px">
+      <sc-for list="{{chips}}" as="h" hint-placeholder-count="3">
+        <button type="button" onClick="{{h.remove}}" aria-label="Remove {{h.name}}" style="min-height: 36px; padding: 0 8px 0 10px; border-radius: 18px; border: 1px solid #3A4252; background: #232A38; color: #EDE9E0; font: 500 13px Inter, sans-serif; display: flex; align-items: center; gap: 6px">
+          <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 4px; background: {{h.color}}"></span>
+          {{h.name}}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A9B0BD" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </sc-for>
+    </div>
+    <sc-if value="{{full}}" hint-placeholder-val="{{ false }}">
+      <a href="Breakdown.dc.html" style="min-height: 52px; border-radius: 14px; background: {{accent}}; color: #1A1408; text-decoration: none; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center">Hand complete: see score</a>
+    </sc-if>
+    <sc-if value="{{notFull}}" hint-placeholder-val="{{ true }}">
+      <p style="margin: 0; min-height: 52px; border-radius: 14px; border: 1px dashed #3A4252; color: #A9B0BD; font-size: 15px; display: flex; align-items: center; justify-content: center">{{remainingText}}</p>
+    </sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E3B75B","options":["#E3B75B","#7FC4E8","#9DD49A"]},"$preview":{"width":390,"height":844}}'>
+const SUITS = [
+  { label: 'Army', color: '#D27A68', cards: ['Knights', 'Elven Archers', 'Light Cavalry', 'Dwarvish Infantry', 'Rangers'] },
+  { label: 'Wizard', color: '#9B8BEA', cards: ['Collector', 'Beastmaster', 'Necromancer', 'Warlock Lord', 'Enchantress'] },
+  { label: 'Leader', color: '#E3B75B', cards: ['King', 'Queen', 'Princess', 'Warlord', 'Empress'] },
+  { label: 'Beast', color: '#6FAF6B', cards: ['Unicorn', 'Basilisk', 'Warhorse', 'Dragon', 'Hydra'] },
+  { label: 'Land', color: '#C39A6B', cards: ['Mountain', 'Cavern', 'Bell Tower', 'Forest', 'Earth Elemental'] },
+  { label: 'Flood', color: '#5AAEDB', cards: ['Fountain of Life', 'Swamp', 'Great Flood', 'Island', 'Water Elemental'] },
+  { label: 'Weather', color: '#8FB5C9', cards: ['Rainstorm', 'Blizzard', 'Smoke', 'Whirlwind', 'Air Elemental'] },
+  { label: 'Flame', color: '#E08A4A', cards: ['Wildfire', 'Candle', 'Forge', 'Lightning', 'Fire Elemental'] },
+  { label: 'Weapon', color: '#A7A9B0', cards: ['Warship', 'Magic Wand', 'Sword of Keth', 'Elven Longbow', 'War Dirigible'] },
+  { label: 'Artifact', color: '#D9A3C8', cards: ['Shield of Keth', 'Gem of Order', 'World Tree', 'Book of Changes', 'Protection Rune'] },
+  { label: 'Wild', color: '#EDE9E0', cards: ['Shapeshifter', 'Mirage', 'Doppelganger'] }
+];
+class Component extends DCLogic {
+  state = { hand: ['Princess', 'Unicorn', 'Rangers'] };
+  toggle(name) {
+    const hand = this.state.hand;
+    this.setState({ hand: hand.includes(name) ? hand.filter((n) => n !== name) : hand.concat(name) });
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#E3B75B';
+    const hand = this.state.hand;
+    const colorOf = (n) => (SUITS.find((s) => s.cards.includes(n)) || {}).color;
+    const left = 7 - hand.length;
+    return {
+      accent,
+      sections: SUITS.map((s) => ({
+        label: s.label,
+        color: s.color,
+        cards: s.cards.map((n) => {
+          const on = hand.includes(n);
+          return { name: n, on, pressed: on ? 'true' : 'false', border: on ? accent : '#2C3343', bg: on ? '#2E2A1E' : '#1A1F2A', toggle: () => this.toggle(n) };
+        })
+      })),
+      chips: hand.map((n) => ({ name: n, color: colorOf(n), remove: () => this.toggle(n) })),
+      count: hand.length,
+      full: left <= 0,
+      notFull: left > 0,
+      remainingText: left === 1 ? 'Tap 1 more card' : 'Tap ' + left + ' more cards'
+    };
+  }
+}
+</script>
+</body>
+</html>
