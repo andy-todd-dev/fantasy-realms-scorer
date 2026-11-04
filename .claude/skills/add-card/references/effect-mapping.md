@@ -19,7 +19,11 @@ Helpers are in `src/infrastructure/driven/decks/card-definitions.ts`. `card("x")
 | "+N with both X and Y" | `points(N, { when: allOf(present(...), present(...)) })` |
 | "+N with X or Y" | `points(N, { when: anyOf(present(...), present(...)) })` (applies once, however many match) |
 | "+A with X, or +B with Y", where both could hold and X takes precedence | `points(A, { when: present(X) })`, `points(B, { when: allOf(absent(X), present(Y)) })` |
+| "+N if every non-blanked card is a different suit" | `points(N, { when: allSuitsDifferent })` (includes the card's own suit, Wild counts as a suit, and part-built hands qualify) |
+| "+A for a 3-card run, +B for a 4-card run", on base strengths | `baseStrengthRun([{ length: 3, points: A }, { length: 4, points: B }])` (includes the card's own strength; duplicates do nothing; only the longest run pays, at its highest tier, without adding up; longer than the top tier pays nothing extra) |
+| "The sum of the base strength of all X" | `sum(suit("x"), "baseStrength")` (never counts its owner; blanked cards add nothing; other cards' bonuses and penalties stay out of it) |
 | "BLANKS all X and Y" | `blank(suit("x"), suit("y"))` |
+| "BLANKS all X except the named card" | `blank(except(suit("x"), card("y")))` (`except` works wherever a suit matcher does, including `per`, `when` and clears) |
 | "BLANKS the named card" | `blank(card("x"))` |
 | "Blanked unless with X" | `blankSelf({ when: absent(suit("x")) })` |
 | "Blanked with any X" | `blankSelf({ when: present(suit("x")) })` |
@@ -34,13 +38,13 @@ Helpers are in `src/infrastructure/driven/decks/card-definitions.ts`. `card("x")
 
 All of this comes from `src/domain/score.ts`:
 
-- **A card never counts itself.** `per` and `when` only look at the other cards, so printed "other" ("each other Leader") needs no extra modelling. It also means a Leader's "with a Leader" needs a second Leader.
+- **A card never counts itself, with two exceptions.** `per` and `when` only look at the other cards, except that `allSuitsDifferent` includes the owner's suit, and `baseStrengthRun` includes the owner's strength. So printed "other" ("each other Leader") needs no extra modelling. It also means a Leader's "with a Leader" needs a second Leader.
 - **A blank never hits the card that owns it.** "All Beasts" on a Beast means the other Beasts.
 - **A blanked card has no effect on other cards.** It has no name, suit, base strength, bonus or penalty. When points are added up, it gives none, satisfies no `present` condition, and counts as missing for `absent`, so blanking a card can trigger someone else's penalty. Clearing and blanking have already happened by then, as below. These rules are quoted at the top of `score.ts`, so don't weaken them.
 - **Blanks that target other cards are simultaneous.** A card that still blanks at that point blanks everything it targets, even if another card blanks it. If A blanks B and B blanks C, both B and C are blanked. If two cards blank each other, both are blanked, whatever order they're in.
 - **Self-blanks come after those.** Their conditions only see cards that other cards didn't blank, so a blanked Army can't save a card that needs one, and a blanked Weather can't blank a card that avoids it. They're all checked at once, so one self-blanked card can still satisfy another card's self-blank condition. A self-blanked card has already blanked its targets by then. This order is our interpretation of the rulebook, noted in `score.ts`.
 - **Clears apply before anything else, from the full hand.** The rulebook says clearing comes before any penalties are applied. So a cleared penalty can't blank the card that cleared it, and a clearer that's later blanked has still cleared. A cleared card keeps its suit, name, base strength and bonus. Only bonus-slot `clearPenalty` effects count, because the rulebook calls clearing a kind of bonus.
-- **`clearPenaltySuitWord` changes penalty effects, not card text.** It runs with the other clearing, from the full hand, on other cards' penalties only. A blank loses that target and keeps the rest. An effect that counts the suit, or whose condition names it anywhere, stops applying altogether. Matchers naming a specific card are untouched, even if that card is of the suit.
+- **`clearPenaltySuitWord` changes penalty effects, not card text.** It runs with the other clearing, from the full hand, on other cards' penalties only. A blank loses that target, along with any exception on it, and keeps the rest. An effect that counts or sums the suit, or whose condition names it anywhere, stops applying altogether. Matchers naming a specific card are untouched, even if that card is of the suit.
 - **Bonus and penalty score the same way, but only penalties can be cleared.** Keep each effect in the slot the card prints it in.
 - **Unknown effect kinds silently score 0.** `effectPoints` returns 0 for anything that isn't `points`, and `isBlanked` only looks at `blank`. A new kind compiles and does nothing until the engine handles it, which is why the test comes first.
 
@@ -51,9 +55,8 @@ Each of these goes through the propose-and-confirm step in `SKILL.md`.
 | Printed idea | What's missing |
 |---|---|
 | Clearing a word from penalties that isn't a suit | `clearPenaltySuitWord` only removes a suit |
-| Exceptions: "all X except Y" | targets and matchers have no exclusion |
-| Whole-hand or threshold rules: all different suits, odd strengths, N of one suit, runs | conditions only ask whether a card matches, not about the hand as a whole |
-| Values read from other cards: "add the base strength of..." | `points` is a fixed number |
+| Other whole-hand or threshold rules: odd strengths, N of one suit | apart from `allSuitsDifferent` and `baseStrengthRun`, effects only ask whether a card matches, not about the hand as a whole |
+| Values read from other cards, other than summing base strengths: "the highest base strength", "the base strength of any one card" | `points` is a fixed number, and `sum` only adds up its matching cards |
 | Changing identity: new suit or name, duplicating a card | `matches` reads a card's printed suit and ID |
 | Player choices: "any one card of your choice", "you may" | scoring takes only card IDs, so there's nowhere for a choice to come from |
 | Extra cards: an eighth card from the discard | `HAND_SIZE` in `selectors.ts` is only a display target, but picking from the discard isn't modelled |

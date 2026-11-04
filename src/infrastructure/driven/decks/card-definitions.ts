@@ -1,14 +1,39 @@
 import type {
   Card,
   CardEffect,
+  CardIdMatcher,
   CardMatcher,
   EffectCondition,
   Suit,
+  SuitMatcher,
 } from "../../../domain/card";
 
 export type CardDefinition = Omit<Card, "id">;
 
-export const suit = (suitName: Suit): CardMatcher => ({ suit: suitName });
+export const suit = (suitName: Suit): SuitMatcher => ({ suit: suitName });
+
+export const except = (
+  matcher: SuitMatcher,
+  ...cards: CardIdMatcher[]
+): SuitMatcher => ({
+  ...matcher,
+  except: [...(matcher.except ?? []), ...cards.map(({ cardId }) => cardId)],
+});
+
+// Every card has exactly one suit, so this reaches every card. Add any new suit here.
+export const allSuits: readonly CardMatcher[] = [
+  suit("army"),
+  suit("leader"),
+  suit("wizard"),
+  suit("weapon"),
+  suit("artifact"),
+  suit("beast"),
+  suit("land"),
+  suit("weather"),
+  suit("flood"),
+  suit("flame"),
+  suit("wild"),
+];
 
 export const present = (matcher: CardMatcher): EffectCondition => ({
   present: matcher,
@@ -26,10 +51,21 @@ export const anyOf = (...conditions: EffectCondition[]): EffectCondition => ({
   anyOf: conditions,
 });
 
+export const allSuitsDifferent: EffectCondition = { allSuitsDifferent: true };
+
 export const points = (
   amount: number,
   options: { per?: CardMatcher; when?: EffectCondition } = {},
 ): CardEffect => ({ kind: "points", points: amount, ...options });
+
+export const sum = (
+  of: CardMatcher,
+  attribute: "baseStrength",
+): CardEffect => ({ kind: "sum", of, attribute });
+
+export const baseStrengthRun = (
+  tiers: readonly { length: number; points: number }[],
+): CardEffect => ({ kind: "baseStrengthRun", tiers });
 
 export const blank = (...targets: CardMatcher[]): CardEffect => ({
   kind: "blank",
