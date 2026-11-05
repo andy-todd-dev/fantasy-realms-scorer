@@ -125,7 +125,7 @@ function withoutPenaltySuitWord(
   });
 }
 
-// Removes suit words from penalties, which is clearing part of a penalty. Like other clearing, this looks at the full hand, so a card that is later blanked still clears.
+// Removes suit words from penalties, which is clearing part of a penalty. A clear with targets only reaches the cards they match; one without reaches every other card. Like other clearing, this looks at the full hand, so a card that is later blanked still clears.
 function withoutClearedPenaltySuitWords(cards: readonly Card[]): readonly Card[] {
   return cards.map((card) => {
     const { penalty } = card;
@@ -138,7 +138,8 @@ function withoutClearedPenaltySuitWords(cards: readonly Card[]): readonly Card[]
       .flatMap((other) => other.bonus?.effects ?? [])
       .reduce(
         (remaining, effect) =>
-          effect.kind === "clearPenaltySuitWord"
+          effect.kind === "clearPenaltySuitWord" &&
+          (!effect.targets || effect.targets.some((target) => matches(card, target)))
             ? withoutPenaltySuitWord(remaining, effect.suit)
             : remaining,
         penalty.effects,

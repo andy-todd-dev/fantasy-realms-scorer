@@ -63,6 +63,7 @@ export type CardEffect =
   | {
       readonly kind: "clearPenaltySuitWord";
       readonly suit: Suit;
+      readonly targets?: readonly CardMatcher[];
     };
 
 export type CardAbility = {

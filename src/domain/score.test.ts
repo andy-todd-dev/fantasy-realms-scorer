@@ -771,6 +771,75 @@ describe("calculateScore", () => {
         calculateScore([subject([minusThreePerArmy]), anArmy, penaltyClearer]),
       ).toBe(18); // (10 - 3) + 10 + 1
     });
+
+    describe("limited to targets", () => {
+      const clearsArmyOnFloods: CardEffect = {
+        kind: "clearPenaltySuitWord",
+        suit: "army",
+        targets: [{ suit: "flood" }],
+      };
+      const limitedClearer = card("clearer", "wizard", 1, [clearsArmyOnFloods]);
+      const floodSubject = withPenalty(card("flood-1", "flood", 10), [
+        minusThreePerArmy,
+      ]);
+
+      it("clears the word on a card matching a target", () => {
+        expect(calculateScore([floodSubject, anArmy, limitedClearer])).toBe(21); // 10 + 10 + 1
+      });
+
+      it("leaves the word on a card matching no target", () => {
+        expect(
+          calculateScore([subject([minusThreePerArmy]), anArmy, limitedClearer]),
+        ).toBe(18); // (10 - 3) + 10 + 1
+      });
+
+      it("treats matching and non-matching cards separately in one hand", () => {
+        expect(
+          calculateScore([
+            floodSubject,
+            subject([minusThreePerArmy]),
+            anArmy,
+            limitedClearer,
+          ]),
+        ).toBe(28); // 10 + (10 - 3) + 10 + 1
+      });
+
+      it("doesn't clear the clearer's own penalty, even if it matches a target", () => {
+        const matchesItself = withPenalty(
+          card("clearer", "flood", 1, [clearsArmyOnFloods]),
+          [minusThreePerArmy],
+        );
+
+        expect(calculateScore([matchesItself, anArmy])).toBe(8); // (1 - 3) + 10
+      });
+
+      it("still clears when the clearer blanks itself", () => {
+        const selfBlankingClearer = withPenalty(limitedClearer, [
+          { kind: "blankSelf", when: { absent: { suit: "weather" } } },
+        ]);
+
+        expect(
+          calculateScore([floodSubject, anArmy, selfBlankingClearer]),
+        ).toBe(20); // 10 + 10, clearer blanked
+      });
+
+      it("still clears when blanking the target makes the clearer blank itself", () => {
+        const floodBlanker = withPenalty(card("flood-1", "flood", 32), [
+          { kind: "blank", targets: [{ suit: "army" }, { suit: "land" }] },
+        ]);
+        const blanksFloods = withPenalty(card("blanker", "weather", 30), [
+          { kind: "blank", targets: [{ suit: "flood" }] },
+        ]);
+        const needsFlood = withPenalty(
+          card("clearer", "weapon", 23, [clearsArmyOnFloods]),
+          [{ kind: "blankSelf", when: { absent: { suit: "flood" } } }],
+        );
+        const hand = [floodBlanker, blanksFloods, anArmy, aLand];
+
+        expect(calculateScore(hand)).toBe(30); // 30, flood, army and land blanked
+        expect(calculateScore([...hand, needsFlood])).toBe(40); // 30 + 10, flood, land and clearer blanked
+      });
+    });
   });
 
   describe("allSuitsDifferent conditions", () => {
