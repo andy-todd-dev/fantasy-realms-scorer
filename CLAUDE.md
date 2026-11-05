@@ -1,4 +1,4 @@
-# Fantasy Realms Scorer
+# Realms Scorer
 
 Expo/React Native app that works out your score for the Fantasy Realms card game.
 

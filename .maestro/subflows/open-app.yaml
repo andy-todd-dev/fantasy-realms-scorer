@@ -12,4 +12,4 @@ appId: dev.andytodd.realmsscorer
       - extendedWaitUntil:
           visible: "Fetch development servers"
           timeout: 15000
-      - openLink: exp+fantasy-realms-scorer://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081&disableAutoLaunch=1&disableFab=1
+      - openLink: exp+realms-scorer://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081&disableAutoLaunch=1&disableFab=1

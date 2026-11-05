@@ -56,7 +56,7 @@ function Header() {
   return (
     <HStack className="items-center gap-2 bg-background px-4 pb-2 pt-4">
       <Heading size="xl" accessibilityRole="header" className="flex-1">
-        Realm Scorer
+        Realms Scorer
       </Heading>
       <Button testID="clear-hand" variant="ghost" size="sm" isDisabled>
         <ButtonIcon as={RotateCcw} className="h-4 w-4 text-subtle-foreground" />

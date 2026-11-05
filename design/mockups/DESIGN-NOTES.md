@@ -1,4 +1,4 @@
-# Fantasy Realms Scorer: design notes
+# Realms Scorer: design notes
 
 These notes cover the intent behind the mockups in this folder: the things that can't be read from the screens themselves. Use the HTML files for exact colours, fonts and spacing; use this file for behaviour and reasoning.
 

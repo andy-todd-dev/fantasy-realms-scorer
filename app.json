@@ -1,6 +1,6 @@
 {
-  "name": "fantasy-realms-scorer",
-  "slug": "fantasy-realms-scorer",
+  "name": "Realms Scorer",
+  "slug": "realms-scorer",
   "android": {
     "package": "dev.andytodd.realmsscorer"
   },
@@ -17,5 +17,11 @@
         ]
       }
     ]
-  ]
+  ],
+  "extra": {
+    "eas": {
+      "projectId": "f2fd1628-3d70-4892-8c21-d33e38e0ea32"
+    }
+  },
+  "owner": "andytodddev"
 }
