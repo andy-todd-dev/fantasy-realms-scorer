@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, View } from "react-native";
 import { loadCards } from "../state/cards-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { scoreHand } from "../state/score-slice";
 import { selectHandCardIds, selectScreen } from "../state/selectors";
-import { HandScreen } from "./HandScreen";
-import { PickCardsScreen } from "./PickCardsScreen";
+import { BreakdownScreen } from "./BreakdownScreen";
+import { HomeScreen } from "./HomeScreen";
 
 export function Screens() {
   const dispatch = useAppDispatch();
@@ -24,7 +24,11 @@ export function Screens() {
   return (
     <>
       <StatusBar barStyle="light-content" />
-      {screen === "hand" ? <HandScreen /> : <PickCardsScreen />}
+      {/* Home stays mounted behind the breakdown, to keep its scroll position and header state. */}
+      <View className={screen === "home" ? "flex-1" : "hidden"}>
+        <HomeScreen />
+      </View>
+      {screen === "breakdown" && <BreakdownScreen />}
     </>
   );
 }

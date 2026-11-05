@@ -2,33 +2,30 @@ appId: dev.andytodd.realmsscorer
 ---
 - runFlow: subflows/open-app.yaml
 
-# The hand starts empty and is scored through the real wiring.
+# The app opens on the grid with an empty hand, scored through the real wiring.
 # The long wait covers Metro's first bundle on debug builds.
 - extendedWaitUntil:
     visible:
-      id: pick-cards
+      id: card-grid
     timeout: 60000
-- assertVisible: "No cards selected."
+- assertVisible: "Tap cards or scan"
 - assertVisible:
     id: hand-score
     text: "0"
 
-# Features that aren't implemented yet are disabled
+# Features that aren't implemented yet are disabled, and there's nothing to break down yet
 - assertVisible:
-    id: new-hand
-    enabled: false
-- assertVisible:
-    id: show-calculation
+    id: clear-hand
     enabled: false
 - assertVisible:
     id: scan-hand
     enabled: false
+- assertVisible:
+    id: show-breakdown
+    enabled: false
 
-# Cards load through the real wiring
-- tapOn:
-    id: pick-cards
-# Leaders are partway down the alphabetical list, so scroll to them. Centring keeps the tiles
-# clear of the hand tray, which grows as cards are added.
+# Cards load through the real wiring. Leaders are partway down the alphabetical list, so scroll to
+# them. Centring keeps the tiles clear of the score bar.
 - scrollUntilVisible:
     element:
       id: card-tile-king
@@ -36,19 +33,14 @@ appId: dev.andytodd.realmsscorer
     centerElement: true
 - assertVisible:
     id: card-tile-queen
-- assertVisible: "0 of 7"
-- assertVisible: "Tap 7 more cards"
-- assertVisible:
-    id: pick-scan
-    enabled: false
 
-# Tapping King adds it and stays on the picker
+# Tapping King adds it, stays on the grid and scores it
 - tapOn:
     id: card-tile-king
+- assertVisible: "1 of 7 cards"
 - assertVisible:
-    id: hand-chip-king
-- assertVisible: "1 of 7"
-- assertVisible: "Tap 6 more cards"
+    id: hand-score
+    text: "8"
 
 # Removing isn't implemented yet, so tapping King again does nothing
 - assertVisible:
@@ -56,21 +48,31 @@ appId: dev.andytodd.realmsscorer
     enabled: false
 - tapOn:
     id: card-tile-king
-- assertVisible: "1 of 7"
+- assertVisible: "1 of 7 cards"
 
-# Adding Queen puts it after King in the hand
+# Adding Queen puts it after King in the hand, shown on the breakdown
 - tapOn:
     id: card-tile-queen
-- assertVisible: "2 of 7"
-- tapOn:
-    id: back-to-hand
-- assertVisible:
-    id: hand-card-queen
-    below:
-      id: hand-card-king
+- assertVisible: "2 of 7 cards"
 - assertVisible:
     id: hand-score
     text: "14"
+- tapOn:
+    id: show-breakdown
+- assertVisible:
+    id: breakdown-total
+    text: "14"
+- assertVisible:
+    id: breakdown-card-queen
+    below:
+      id: breakdown-card-king
 - assertVisible:
     id: remove-card-king
     enabled: false
+
+# Back returns to the grid, where it was left, with the hand intact
+- tapOn:
+    id: back-to-cards
+- assertVisible:
+    id: card-tile-king
+- assertVisible: "2 of 7 cards"

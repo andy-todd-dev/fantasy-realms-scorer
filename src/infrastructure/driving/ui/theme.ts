@@ -1,5 +1,8 @@
 import type { Suit } from "../../../domain/card";
 
+// Shown where a score isn't available, or where scoring doesn't yet report the figure.
+export const NO_VALUE = "–";
+
 // Class names are written out in full because Tailwind only generates classes it can find as text.
 export const SUITS: Record<Suit, { label: string; colorClass: string }> = {
   army: { label: "Army", colorClass: "bg-suit-army" },

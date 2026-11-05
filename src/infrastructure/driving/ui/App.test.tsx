@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
 import { createAppStore } from "../state/store";
@@ -7,6 +7,14 @@ import { App } from "./App";
 jest.mock("react-native-safe-area-context", () =>
   jest.requireActual("react-native-safe-area-context/jest/mock").default,
 );
+
+// Their native modules don't exist under Jest. Reanimated's mock needs Worklets, so mock that too.
+jest.mock("react-native-worklets", () => jest.requireActual("react-native-worklets/lib/module/mock"));
+jest.mock("react-native-reanimated", () => ({
+  ...jest.requireActual("react-native-reanimated/mock"),
+  // Missing from Reanimated's mock.
+  useReducedMotion: () => false,
+}));
 
 // The first render loads all of React Native, which takes over 5s without a Jest cache.
 jest.setTimeout(30000);
@@ -49,8 +57,8 @@ async function renderApp({
 
   return {
     press,
-    openPicker: () => press("pick-cards"),
-    backToHand: () => press("back-to-hand"),
+    showBreakdown: () => press("show-breakdown"),
+    backToCards: () => press("back-to-cards"),
     tapCard: (cardId: CardId) => press(`card-tile-${cardId}`),
   };
 }
@@ -68,30 +76,49 @@ describe("scoring", () => {
     expect(scoreHand).toHaveBeenCalledWith([]);
   });
 
-  it("requests a new score each time the hand changes, from the picker", async () => {
+  it("updates the score each time a card is tapped", async () => {
     const scoreHand = jest.fn(sumStrengths);
-    const { openPicker, backToHand, tapCard } = await renderApp({ scoreHand });
+    const { tapCard } = await renderApp({ scoreHand });
 
-    await openPicker();
     await tapCard("king");
     await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith(["king"]));
+    await expectScore("8");
     await tapCard("queen");
     await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith(["king", "queen"]));
-    await backToHand();
 
     await expectScore("14");
   });
 
   it("doesn't request a score when only the screen changes", async () => {
     const scoreHand = jest.fn(sumStrengths);
-    const { openPicker, backToHand } = await renderApp({ scoreHand });
-    await expectScore("0");
+    const { showBreakdown, backToCards, tapCard } = await renderApp({ scoreHand });
 
-    await openPicker();
-    await backToHand();
+    await tapCard("king");
+    await expectScore("8");
+    expect(scoreHand).toHaveBeenCalledTimes(2);
 
+    await showBreakdown();
+    await backToCards();
+
+    await expectScore("8");
+    expect(scoreHand).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the current score while a new one is in flight", async () => {
+    const responses: ((score: number) => void)[] = [];
+    const { tapCard } = await renderApp({
+      scoreHand: () => new Promise((resolve) => responses.push(resolve)),
+    });
+
+    await act(async () => responses[0](0));
     await expectScore("0");
-    expect(scoreHand).toHaveBeenCalledTimes(1);
+    await tapCard("king");
+
+    expect(screen.getByTestId("hand-score")).toHaveTextContent("0");
+
+    await act(async () => responses[1](8));
+
+    await expectScore("8");
   });
 
   it("shows a placeholder when scoring fails", async () => {
@@ -103,140 +130,176 @@ describe("scoring", () => {
   });
 });
 
-describe("the hand screen", () => {
-  it("starts with an empty hand", async () => {
+describe("the home screen", () => {
+  it("opens on the card grid with an empty hand", async () => {
     await renderApp();
 
-    expect(screen.getByText("No cards selected.")).toBeOnTheScreen();
-    expect(screen.getByTestId("hand-count")).toHaveTextContent("0 of 7 cards");
+    expect(await screen.findByTestId("card-tile-king")).toBeOnTheScreen();
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    expect(screen.queryByTestId("breakdown-total")).toBeNull();
   });
 
   it("disables the features that aren't implemented yet", async () => {
-    const { openPicker, backToHand, tapCard } = await renderApp();
+    const { tapCard } = await renderApp();
 
-    await openPicker();
     await tapCard("king");
-    await backToHand();
 
-    expect(screen.getByTestId("new-hand")).toBeDisabled();
-    expect(screen.getByTestId("show-calculation")).toBeDisabled();
+    expect(screen.getByTestId("clear-hand")).toBeDisabled();
     expect(screen.getByTestId("scan-hand")).toBeDisabled();
-    expect(screen.getByTestId("remove-card-king")).toBeDisabled();
-    expect(screen.getByTestId("pick-cards")).toBeEnabled();
+    expect(screen.getByTestId("card-tile-king")).toBeDisabled();
+    expect(screen.getByTestId("card-tile-queen")).toBeEnabled();
   });
-});
 
-describe("picking cards", () => {
+  it("can't open the breakdown with an empty hand", async () => {
+    await renderApp();
+
+    expect(screen.getByTestId("show-breakdown")).toBeDisabled();
+    expect(screen.getByTestId("hand-pips")).toBeDisabled();
+  });
+
   it("groups the cards under their suits, leaving out suits with no cards", async () => {
-    const { openPicker } = await renderApp();
+    await renderApp();
 
-    await openPicker();
-
-    expect(screen.getByText("Army")).toBeOnTheScreen();
+    expect(await screen.findByText("Army")).toBeOnTheScreen();
     expect(screen.getByText("Leader")).toBeOnTheScreen();
     expect(screen.queryByText("Flood")).toBeNull();
     expect(screen.getByTestId("card-tile-knights")).toBeOnTheScreen();
   });
 
-  it("adds a tapped card to the hand and stays on the picker", async () => {
-    const { openPicker, backToHand, tapCard } = await renderApp();
+  it("marks a tapped card as selected and counts it", async () => {
+    const { tapCard } = await renderApp();
 
-    await openPicker();
-
-    expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
+    expect(await screen.findByTestId("card-tile-king")).not.toBeChecked();
 
     await tapCard("king");
 
     expect(screen.getByTestId("card-tile-king")).toBeChecked();
-    expect(screen.getByTestId("hand-chip-king")).toHaveTextContent("King");
-    expect(screen.getByTestId("hand-progress")).toHaveTextContent("1 of 7");
-
-    await backToHand();
-
-    expect(screen.getByTestId("hand-card-king")).toBeOnTheScreen();
     expect(screen.getByTestId("hand-count")).toHaveTextContent("1 of 7 cards");
+    expect(screen.getByTestId("hand-pips")).toHaveProp("accessibilityLabel", "1 of 7 cards. Show breakdown");
   });
 
-  it("can't remove a card until removal is implemented", async () => {
-    const { openPicker, tapCard } = await renderApp();
-
-    await openPicker();
-    await tapCard("king");
-
-    expect(screen.getByTestId("card-tile-king")).toBeDisabled();
-    expect(screen.getByTestId("hand-chip-king")).toBeDisabled();
-    expect(screen.getByTestId("card-tile-queen")).toBeEnabled();
-  });
-
-  it("disables scanning from the picker", async () => {
-    const { openPicker } = await renderApp();
-
-    await openPicker();
-
-    expect(screen.getByTestId("pick-scan")).toBeDisabled();
-  });
-
-  it("counts down the cards still needed, down to the singular", async () => {
-    const { openPicker, tapCard } = await renderApp({
+  it("confirms a full hand at 7 cards, and still allows an 8th", async () => {
+    const { tapCard } = await renderApp({
       loadCards: async () => eightCards,
     });
-
-    await openPicker();
-
-    expect(screen.getByTestId("remaining-cards")).toHaveTextContent("Tap 7 more cards");
-
-    for (const index of [0, 1, 2, 3, 4, 5]) {
-      await tapCard(`card-${index}`);
-    }
-
-    expect(screen.getByTestId("remaining-cards")).toHaveTextContent("Tap 1 more card");
-  });
-
-  it("shows a disabled see score button at 7 cards, and still allows an 8th", async () => {
-    const { openPicker, backToHand, tapCard } = await renderApp({
-      loadCards: async () => eightCards,
-    });
-
-    await openPicker();
-
-    expect(screen.queryByTestId("see-score")).toBeNull();
 
     for (const index of [0, 1, 2, 3, 4, 5, 6]) {
       await tapCard(`card-${index}`);
     }
 
-    expect(screen.getByTestId("see-score")).toBeDisabled();
-    expect(screen.queryByTestId("remaining-cards")).toBeNull();
-    expect(screen.getByTestId("hand-progress")).toHaveTextContent("7 of 7");
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("7 cards ✓");
     expect(screen.getByTestId("card-tile-card-7")).toBeEnabled();
 
     await tapCard("card-7");
 
-    expect(screen.getByTestId("hand-progress")).toHaveTextContent("8 cards");
-    expect(screen.getByTestId("see-score")).toBeDisabled();
-
-    await backToHand();
-
-    expect(screen.getByTestId("hand-count")).toHaveTextContent("8 cards");
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("8 cards ✓");
   });
 
   it("explains when the cards failed to load", async () => {
-    const { openPicker } = await renderApp({
+    await renderApp({
       loadCards: () => Promise.reject(new Error("no cards")),
     });
-
-    await openPicker();
 
     expect(await screen.findByText("Could not load cards.")).toBeOnTheScreen();
   });
 
   it("shows a loading message until the cards arrive", async () => {
-    const { openPicker } = await renderApp({
+    await renderApp({
       loadCards: () => new Promise(() => {}),
     });
 
-    await openPicker();
-
     expect(screen.getByText("Loading cards...")).toBeOnTheScreen();
+  });
+});
+
+describe("the breakdown screen", () => {
+  it("opens from the button, listing the hand in the order it was picked", async () => {
+    const { showBreakdown, tapCard } = await renderApp();
+
+    await tapCard("queen");
+    await tapCard("king");
+    await expectScore("14");
+    await showBreakdown();
+
+    expect(screen.getByTestId("breakdown-title")).toHaveTextContent("Your hand: 14");
+    expect(screen.getByTestId("breakdown-total")).toHaveTextContent("14");
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("2 of 7 cards");
+    expect(
+      screen.getAllByTestId(/^breakdown-card-/).map((row) => row.props.testID),
+    ).toEqual(["breakdown-card-queen", "breakdown-card-king"]);
+    expect(screen.queryByTestId("breakdown-card-knights")).toBeNull();
+  });
+
+  it("opens from the pips too", async () => {
+    const { press, tapCard } = await renderApp();
+
+    await tapCard("king");
+    await press("hand-pips");
+
+    expect(screen.getByTestId("breakdown-card-king")).toBeOnTheScreen();
+  });
+
+  it("returns to the cards with the hand intact", async () => {
+    const { showBreakdown, backToCards, tapCard } = await renderApp();
+
+    await tapCard("king");
+    await showBreakdown();
+    await backToCards();
+
+    expect(screen.queryByTestId("breakdown-total")).toBeNull();
+    expect(screen.getByTestId("card-tile-king")).toBeChecked();
+  });
+
+  it("marks a full hand as complete, and an 8th card with no 8 of 7", async () => {
+    const { showBreakdown, backToCards, tapCard } = await renderApp({
+      loadCards: async () => eightCards,
+    });
+
+    for (const index of [0, 1, 2, 3, 4, 5, 6]) {
+      await tapCard(`card-${index}`);
+    }
+    await showBreakdown();
+
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("7 cards · complete");
+
+    await backToCards();
+    await tapCard("card-7");
+    await showBreakdown();
+
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("8 cards · complete");
+  });
+
+  it("can't remove a card until removal is implemented", async () => {
+    const { showBreakdown, tapCard } = await renderApp();
+
+    await tapCard("king");
+    await showBreakdown();
+
+    expect(screen.getByTestId("remove-card-king")).toBeDisabled();
+    expect(screen.getByLabelText("Remove King from hand")).toBeOnTheScreen();
+  });
+
+  it("shows placeholders for the figures scoring doesn't report yet", async () => {
+    const { showBreakdown, tapCard } = await renderApp();
+
+    await tapCard("king");
+    await showBreakdown();
+
+    expect(screen.getByText("Base")).toBeOnTheScreen();
+    expect(screen.getByText("Bonuses")).toBeOnTheScreen();
+    expect(screen.getByText("Penalties")).toBeOnTheScreen();
+    expect(screen.getByText("Blanked cards: –")).toBeOnTheScreen();
+  });
+
+  it("shows a placeholder total when scoring fails", async () => {
+    const { showBreakdown, tapCard } = await renderApp({
+      scoreHand: () => Promise.reject(new Error("no score")),
+    });
+
+    await tapCard("king");
+    await showBreakdown();
+
+    expect(screen.getByTestId("breakdown-total")).toHaveTextContent("–");
+    expect(screen.getByTestId("breakdown-card-king")).toBeOnTheScreen();
   });
 });

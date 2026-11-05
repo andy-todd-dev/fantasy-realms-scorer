@@ -1,6 +1,7 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true,
-    "expo@anthropic-plugin-directory": true
+    "expo@anthropic-plugin-directory": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }

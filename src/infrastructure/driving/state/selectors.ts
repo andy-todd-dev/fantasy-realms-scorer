@@ -35,16 +35,20 @@ export type CardTile = CardSection["cards"][number];
 export const selectHandProgress = createSelector(
   [selectHandCardIds],
   ({ length: count }) => {
-    const isOverTarget = count > HAND_SIZE;
+    const isComplete = count >= HAND_SIZE;
+    const countText = isComplete
+      ? `${count} cards`
+      : `${count} of ${HAND_SIZE} cards`;
 
     return {
-      count,
-      remaining: Math.max(HAND_SIZE - count, 0),
-      isComplete: count >= HAND_SIZE,
-      countLabel: isOverTarget ? `${count} cards` : `${count} of ${HAND_SIZE}`,
-      longCountLabel: isOverTarget
-        ? `${count} cards`
-        : `${count} of ${HAND_SIZE} cards`,
+      isEmpty: count === 0,
+      isComplete,
+      // One entry per slot, true when filled. A hand over the target gets extra slots.
+      pips: Array.from({ length: Math.max(HAND_SIZE, count) }, (_, index) => index < count),
+      countLabel:
+        count === 0 ? "Tap cards or scan" : isComplete ? `${countText} ✓` : countText,
+      reviewLabel: isComplete ? `${countText} · complete` : countText,
+      pipsAccessibilityLabel: `${countText}. Show breakdown`,
     };
   },
 );
