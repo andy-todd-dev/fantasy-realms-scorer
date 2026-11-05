@@ -10,6 +10,7 @@ npx expo run:android --device        # build, install, and run on phone
 npx expo start --dev-client          # dev server only
 npx expo prebuild -p android --clean # regenerate android/
 npx expo install <package>           # add a dependency
+npm run ui:add -- <component>        # add a Gluestack component
 npx expo-doctor                      # diagnose project issues
 npm run lint                         # run ESLint, including layer boundary rules
 npm test                             # run Jest tests
@@ -21,7 +22,29 @@ npm run test:e2e:build:release       # build and install the release app, then r
 
 Do not install the app on the phone or run Maestro flows unless explicitly told to.
 
-Component tests use React Native Testing Library: render the real components and store with fake use cases, as in `App.test.tsx`. Use them for UI behaviour, including failure and in-flight states, and keep Maestro for flows through the real wiring.
+Component tests use React Native Testing Library: render the real components and store with fake use cases, as in `App.test.tsx`. Use them for UI behaviour, including failure and in-flight states, and keep Maestro for flows through the real wiring. Jest doesn't run the CSS, so passing tests say nothing about styling: check that on a device.
+
+## Styling
+
+Gluestack v5 components, styled with NativeWind v5 and Tailwind v4. `design/mockups/DESIGN-NOTES.md` maps the design to tokens, classes and components.
+
+- Colours and fonts are tokens in `src/infrastructure/driving/ui/global.css`, the only place with colour values. Use token classes such as `bg-muted`, never hex values.
+- Write class names out in full, as Tailwind only generates classes it finds as text. `SUITS` in `theme.ts` holds the suit classes for this reason.
+- Use `style` only for values that truly vary at runtime.
+- Use `font-heading` and `font-body-*`. Each font weight is its own family, so `font-medium` and `font-bold` don't work.
+- Third-party components need NativeWind's `styled` to accept `className`, as in `Screen.tsx`.
+- Import icons from their own path, such as `lucide-react-native/icons/x`. Importing from the package root bundles every icon.
+- Some valid Tailwind classes do nothing on native, and lint won't catch them. Metro's `react-native-css` output lists what it drops, and should list nothing, so treat any entry as a problem to fix. `tabular-nums` is one such class, so use `fontVariant` in `style`.
+- `npm run lint` rejects unknown classes. A new prop that takes classes needs adding to `classProps` in `eslint.config.js`.
+
+Gluestack components are source files copied into `ui/gluestack/`:
+
+- Add them with `npm run ui:add`, not the Gluestack CLI directly. On every install the CLI sets `legacy-peer-deps` in `.npmrc`, which hides peer conflicts and removes peers that Jest needs, so the script undoes it.
+- Re-adding a component overwrites it. Prefer tokens and `className` at the call site, and keep other edits to these files small. Most have local edits to reapply: `button`, `heading`, `card` and `gluestack-ui-provider` for the design, and any file with web-only classes, which come with new components too. Remove `index.web.tsx` files, `isWeb` branches, `web:` classes and anything else Metro reports as dropped.
+- Components that need `@legendapp/motion` fail to install while NativeWind is a prerelease, as `5.0.0-rc.1` doesn't satisfy its `>=4.0.0` peer range. Use a narrow `overrides` entry for that package rather than `legacy-peer-deps`.
+- With `android/` present, the CLI can't detect an Expo project and `-y` makes it choose `library`, which replaces NativeWind v5 with v4. Don't pass `-y` to `init`, and choose Expo when asked.
+
+`nativewind` and `react-native-css` are pinned as an exact release candidate pair, and `tailwindcss` and `@tailwindcss/postcss` to 4.2.x. Revisit these when NativeWind v5 is stable.
 
 ## Architecture
 
@@ -30,9 +53,9 @@ Hexagonal. Dependencies point inwards; ESLint enforces the boundaries.
 - `src/domain/`: pure business rules and types. Imports only `domain`.
 - `src/application/`: use cases, as `<name>.usecase.ts` plus `<name>.ports.ts` if it has ports. `use-cases.ts` holds the `UseCases` type. Imports `domain` and `application`; no React, Redux or Expo.
 - `src/infrastructure/driven/`: general-purpose adapter classes that satisfy ports structurally, without `implements`. Imports `domain` types and its own libraries, not `application`.
-- `src/infrastructure/driving/`: `state/` (Redux slices, thunks, selectors) and `ui/` (components). Imports `domain` types. Must not import `driven`.
+- `src/infrastructure/driving/`: `state/` (Redux slices, thunks, selectors) and `ui/` (components, with those copied from Gluestack in `ui/gluestack/`). Imports `domain` types. Must not import `driven`.
 - `src/composition-root.ts`: the only file that imports Awilix. Builds the use cases.
-- `src/main.tsx`: the entry point (`main` in `package.json`). Builds the store, registers the root component, and is the only file with startup side effects.
+- `src/main.tsx`: the entry point (`main` in `package.json`). Builds the store, registers the root component, and is the only file with startup side effects, apart from `App.tsx` importing `global.css`, which NativeWind requires to be outside the file that registers the root component.
 
 Conventions:
 

@@ -1,5 +1,9 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Camera from "lucide-react-native/icons/camera";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
+import LayoutGrid from "lucide-react-native/icons/layout-grid";
+import RotateCcw from "lucide-react-native/icons/rotate-ccw";
+import X from "lucide-react-native/icons/x";
+import { ScrollView } from "react-native";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { screenOpened } from "../state/navigation-slice";
 import {
@@ -7,13 +11,23 @@ import {
   selectHandProgress,
   selectScore,
 } from "../state/selectors";
-import { Button } from "./Button";
-import { Icon } from "./Icon";
+import { Box } from "./gluestack/box";
+import { Button, ButtonIcon, ButtonText } from "./gluestack/button";
+import { Card } from "./gluestack/card";
+import { Divider } from "./gluestack/divider";
+import { Heading } from "./gluestack/heading";
+import { HStack } from "./gluestack/hstack";
+import { Text } from "./gluestack/text";
+import { VStack } from "./gluestack/vstack";
+import { Screen } from "./Screen";
 import { SuitDot } from "./SuitDot";
-import { colors, fonts, SUITS } from "./theme";
+import { SUITS } from "./theme";
 
 // Shown where the score breakdown will go, until scoring reports more than a total.
 const NO_VALUE = "–";
+
+// NativeWind has no class for this on native, so it has to be a style.
+const TABULAR_NUMBERS = { fontVariant: ["tabular-nums" as const] };
 
 export function HandScreen() {
   const dispatch = useAppDispatch();
@@ -22,212 +36,95 @@ export function HandScreen() {
   const score = useAppSelector(selectScore);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
+    <Screen>
+      <HStack className="items-center justify-between px-5 pb-2 pt-5">
+        <Heading size="xl" accessibilityRole="header" className="tracking-wide">
           Realm Scorer
-        </Text>
-        <Button
-          testID="new-hand"
-          label="New hand"
-          variant="outline"
-          icon="reset"
-          iconSize={16}
-          disabled
-          style={styles.newHand}
-          labelStyle={styles.newHandLabel}
-        />
-      </View>
+        </Heading>
+        <Button testID="new-hand" variant="outline" size="sm" isDisabled>
+          <ButtonIcon as={RotateCcw} className="h-4 w-4" />
+          <ButtonText>New hand</ButtonText>
+        </Button>
+      </HStack>
 
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreHeading}>Total score</Text>
-        <View style={styles.scoreLine}>
-          <Text testID="hand-score" style={styles.score}>
+      <Card className="mx-4 mt-2 gap-1 p-5">
+        <Text size="sm" className="font-body-semibold uppercase tracking-widest text-muted-foreground">
+          Total score
+        </Text>
+        <HStack className="items-baseline justify-between">
+          <Text testID="hand-score" className="font-heading text-7xl text-primary">
             {score ?? NO_VALUE}
           </Text>
-          <Text testID="hand-count" style={styles.handCount}>
+          <Text testID="hand-count" size="sm" className="text-muted-foreground">
             {longCountLabel}
           </Text>
-        </View>
-        <View style={styles.subtotals}>
-          <Text style={styles.subtotal}>Base {NO_VALUE}</Text>
-          <Text style={styles.subtotal}>Bonuses {NO_VALUE}</Text>
-          <Text style={styles.subtotal}>Penalties {NO_VALUE}</Text>
-        </View>
-        <Button
-          testID="show-calculation"
-          label="Show calculation"
-          variant="subtle"
-          icon="chevron"
-          iconSize={18}
-          iconPosition="end"
-          disabled
-          style={styles.showCalculation}
-        />
-      </View>
+        </HStack>
+        <HStack className="mt-2 gap-4">
+          <Text size="sm" className="text-subtle-foreground">Base {NO_VALUE}</Text>
+          <Text size="sm" className="text-subtle-foreground">Bonuses {NO_VALUE}</Text>
+          <Text size="sm" className="text-subtle-foreground">Penalties {NO_VALUE}</Text>
+        </HStack>
+        <Button testID="show-calculation" variant="secondary" isDisabled className="mt-3.5">
+          <ButtonText>Show calculation</ButtonText>
+          <ButtonIcon as={ChevronRight} className="h-4.5 w-4.5" />
+        </Button>
+      </Card>
 
-      <View style={styles.hand}>
-        <View style={styles.handHeader}>
-          <Text accessibilityRole="header" style={styles.handTitle}>
+      <VStack className="min-h-0 flex-1 px-4 pt-4">
+        <HStack className="items-baseline justify-between px-1 pb-2">
+          <Heading size="md" accessibilityRole="header">
             Your hand
-          </Text>
-          <Text style={styles.handHint}>Points per card</Text>
-        </View>
-        <ScrollView contentContainerStyle={styles.handList}>
+          </Heading>
+          <Text size="sm" className="text-muted-foreground">Points per card</Text>
+        </HStack>
+        <ScrollView contentContainerClassName="gap-1 pb-3">
           {cards.length === 0 ? (
-            <Text style={styles.empty}>No cards selected.</Text>
+            <Text size="sm" className="px-1 py-3 text-muted-foreground">No cards selected.</Text>
           ) : (
             cards.map((card) => (
-              <View key={card.id} testID={`hand-card-${card.id}`} style={styles.row}>
-                <SuitDot color={SUITS[card.suit].color} />
-                <View style={styles.rowText}>
-                  <Text style={styles.cardName}>{card.name}</Text>
-                  <Text style={styles.cardSuit}>{SUITS[card.suit].label}</Text>
-                </View>
-                <Text style={styles.cardPoints}>{NO_VALUE}</Text>
-                <Pressable
+              <HStack
+                key={card.id}
+                testID={`hand-card-${card.id}`}
+                className="min-h-14 items-center gap-3 rounded-xl bg-muted px-3"
+              >
+                <SuitDot suit={card.suit} />
+                <Box className="flex-1">
+                  <Text className="font-body-medium">{card.name}</Text>
+                  <Text size="xs" className="text-muted-foreground">{SUITS[card.suit].label}</Text>
+                </Box>
+                <Text size="lg" className="font-body-semibold" style={TABULAR_NUMBERS}>{NO_VALUE}</Text>
+                <Button
                   testID={`remove-card-${card.id}`}
-                  accessibilityRole="button"
                   accessibilityLabel={`Remove ${card.name}`}
-                  disabled
-                  style={styles.remove}
+                  variant="ghost"
+                  size="icon"
+                  isDisabled
+                  className="-mr-2"
                 >
-                  <Icon name="close" size={18} color={colors.icon} />
-                </Pressable>
-              </View>
+                  <ButtonIcon as={X} className="h-4.5 w-4.5 text-icon" />
+                </Button>
+              </HStack>
             ))
           )}
         </ScrollView>
-      </View>
+      </VStack>
 
-      <View style={styles.actions}>
-        <Button
-          testID="scan-hand"
-          label="Scan hand"
-          variant="accent"
-          icon="camera"
-          iconSize={22}
-          disabled
-          style={styles.scan}
-          labelStyle={styles.scanLabel}
-        />
+      <Divider />
+      <HStack className="gap-2.5 px-4 pb-7 pt-3">
+        <Button testID="scan-hand" size="lg" isDisabled className="flex-1">
+          <ButtonIcon as={Camera} className="h-5.5 w-5.5" />
+          <ButtonText>Scan hand</ButtonText>
+        </Button>
         <Button
           testID="pick-cards"
-          label="Pick"
           variant="outline"
-          icon="grid"
+          size="lg"
           onPress={() => dispatch(screenOpened("pickCards"))}
-          style={styles.pick}
-        />
-      </View>
-    </SafeAreaView>
+        >
+          <ButtonIcon as={LayoutGrid} className="h-5 w-5" />
+          <ButtonText>Pick</ButtonText>
+        </Button>
+      </HStack>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 22,
-    letterSpacing: 0.44,
-    color: colors.text,
-  },
-  newHand: { paddingHorizontal: 14, borderRadius: 22, gap: 6 },
-  newHandLabel: { fontFamily: fonts.medium, fontSize: 14 },
-  scoreCard: {
-    marginTop: 8,
-    marginHorizontal: 16,
-    padding: 20,
-    gap: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
-  },
-  scoreHeading: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    letterSpacing: 1.04,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-  },
-  scoreLine: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-  },
-  score: {
-    fontFamily: fonts.display,
-    fontSize: 72,
-    lineHeight: 80,
-    color: colors.accent,
-  },
-  handCount: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
-  subtotals: { flexDirection: "row", gap: 16, marginTop: 8 },
-  subtotal: { fontFamily: fonts.regular, fontSize: 13, color: colors.textSoft },
-  showCalculation: { marginTop: 14, borderRadius: 12 },
-  hand: { flex: 1, minHeight: 0, paddingTop: 18, paddingHorizontal: 16 },
-  handHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-    paddingBottom: 8,
-  },
-  handTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.text },
-  handHint: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted },
-  handList: { gap: 4, paddingBottom: 12 },
-  empty: {
-    paddingHorizontal: 4,
-    paddingVertical: 12,
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  row: {
-    minHeight: 52,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: colors.row,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  rowText: { flex: 1 },
-  cardName: { fontFamily: fonts.medium, fontSize: 16, color: colors.text },
-  cardSuit: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted },
-  cardPoints: {
-    fontFamily: fonts.semiBold,
-    fontSize: 17,
-    fontVariant: ["tabular-nums"],
-    color: colors.text,
-  },
-  remove: {
-    width: 44,
-    height: 44,
-    marginRight: -8,
-    alignItems: "center",
-    justifyContent: "center",
-    opacity: 0.4,
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 10,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 28,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
-  scan: { flex: 1, minHeight: 56, borderRadius: 14 },
-  scanLabel: { fontSize: 16 },
-  pick: { minHeight: 56, paddingHorizontal: 18, borderRadius: 14 },
-});

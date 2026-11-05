@@ -143,11 +143,11 @@ describe("picking cards", () => {
 
     await openPicker();
 
-    expect(screen.getByTestId("card-tile-king")).not.toBeSelected();
+    expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
 
     await tapCard("king");
 
-    expect(screen.getByTestId("card-tile-king")).toBeSelected();
+    expect(screen.getByTestId("card-tile-king")).toBeChecked();
     expect(screen.getByTestId("hand-chip-king")).toHaveTextContent("King");
     expect(screen.getByTestId("hand-progress")).toHaveTextContent("1 of 7");
 

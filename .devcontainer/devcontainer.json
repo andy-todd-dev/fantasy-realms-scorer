@@ -28,7 +28,12 @@
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
-    "REACT_NATIVE_PACKAGER_HOSTNAME": "127.0.0.1"
+    "REACT_NATIVE_PACKAGER_HOSTNAME": "127.0.0.1",
+    // The container has no display, so Expo shouldn't try to install the desktop React Native DevTools.
+    "EXPO_UNSTABLE_HEADLESS": "1",
+    // Headless mode also turns these checks off, and they're still wanted.
+    "EXPO_NO_DEPENDENCY_VALIDATION": "0",
+    "EXPO_NO_NEW_ARCH_COMPAT_CHECK": "0"
   },
   "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.gradle /home/vscode/.android /usr/local/android"
 }

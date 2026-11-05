@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Written by the Gluestack CLI, and removed by scripts/ui-add.sh
+.npmrc
+
 # Expo
 .expo/
 dist/
