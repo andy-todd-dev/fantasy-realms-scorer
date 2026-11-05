@@ -6,8 +6,11 @@
 /* Only this folder uses classes. Otherwise Tailwind also generates them from words in docs and mockups. */
 @source ".";
 
-/* Tailwind reads this as a class in the fontVariant value in HandScreen, but it does nothing on native. */
+/* Tailwind reads this as a class in the fontVariant value in BreakdownScreen, but it does nothing on native. */
 @source not inline("tabular-nums");
+
+/* Tailwind reads this as a class wherever the card grid is mentioned, but it does nothing on native. */
+@source not inline("grid");
 
 /* The app is dark-only, so there is one set of values, and GluestackUIProvider is fixed to dark.
    Values are design tokens from design/mockups/DESIGN-NOTES.md, as space-separated RGB channels. */
@@ -37,7 +40,6 @@
     --primary-pressed: 240 205 130;
     --subtle-foreground: 201 206 216;
     --icon: 141 149 163;
-    --chip: 35 42 56;
     --border-strong: 74 82 98;
     --warning: 240 138 93;
     --warning-muted: 42 31 26;
@@ -84,7 +86,6 @@
   --color-primary-pressed: rgb(var(--primary-pressed));
   --color-subtle-foreground: rgb(var(--subtle-foreground));
   --color-icon: rgb(var(--icon));
-  --color-chip: rgb(var(--chip));
   --color-border-strong: rgb(var(--border-strong));
   --color-warning: rgb(var(--warning));
   --color-warning-muted: rgb(var(--warning-muted));

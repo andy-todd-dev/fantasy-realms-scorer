@@ -164,18 +164,18 @@ describe("scoring the hand", () => {
 });
 
 describe("navigation", () => {
-  it("starts on the hand screen and moves between screens", async () => {
+  it("starts on the home screen and moves between screens", async () => {
     const store = await createLoadedStore();
 
-    expect(selectScreen(store.getState())).toBe("hand");
+    expect(selectScreen(store.getState())).toBe("home");
 
-    store.dispatch(screenOpened("pickCards"));
+    store.dispatch(screenOpened("breakdown"));
 
-    expect(selectScreen(store.getState())).toBe("pickCards");
+    expect(selectScreen(store.getState())).toBe("breakdown");
 
-    store.dispatch(screenOpened("hand"));
+    store.dispatch(screenOpened("home"));
 
-    expect(selectScreen(store.getState())).toBe("hand");
+    expect(selectScreen(store.getState())).toBe("home");
   });
 });
 
@@ -196,15 +196,29 @@ describe("tracking progress towards a full hand", () => {
     return store;
   }
 
-  it("reports an empty hand", async () => {
+  it("prompts for cards when the hand is empty", async () => {
     const store = await createStoreWithHandOf(0);
 
     expect(selectHandProgress(store.getState())).toEqual({
-      count: 0,
-      remaining: 7,
+      isEmpty: true,
       isComplete: false,
-      countLabel: "0 of 7",
-      longCountLabel: "0 of 7 cards",
+      pips: [false, false, false, false, false, false, false],
+      countLabel: "Tap cards or scan",
+      reviewLabel: "0 of 7 cards",
+      pipsAccessibilityLabel: "0 of 7 cards. Show breakdown",
+    });
+  });
+
+  it("counts towards 7 for a partial hand", async () => {
+    const store = await createStoreWithHandOf(5);
+
+    expect(selectHandProgress(store.getState())).toEqual({
+      isEmpty: false,
+      isComplete: false,
+      pips: [true, true, true, true, true, false, false],
+      countLabel: "5 of 7 cards",
+      reviewLabel: "5 of 7 cards",
+      pipsAccessibilityLabel: "5 of 7 cards. Show breakdown",
     });
   });
 
@@ -212,23 +226,25 @@ describe("tracking progress towards a full hand", () => {
     const store = await createStoreWithHandOf(7);
 
     expect(selectHandProgress(store.getState())).toEqual({
-      count: 7,
-      remaining: 0,
+      isEmpty: false,
       isComplete: true,
-      countLabel: "7 of 7",
-      longCountLabel: "7 of 7 cards",
+      pips: [true, true, true, true, true, true, true],
+      countLabel: "7 cards ✓",
+      reviewLabel: "7 cards · complete",
+      pipsAccessibilityLabel: "7 cards. Show breakdown",
     });
   });
 
-  it("allows an 8th card, and changes the wording rather than saying 8 of 7", async () => {
+  it("allows an 8th card with an extra pip, and never says 8 of 7", async () => {
     const store = await createStoreWithHandOf(8);
 
     expect(selectHandProgress(store.getState())).toEqual({
-      count: 8,
-      remaining: 0,
+      isEmpty: false,
       isComplete: true,
-      countLabel: "8 cards",
-      longCountLabel: "8 cards",
+      pips: [true, true, true, true, true, true, true, true],
+      countLabel: "8 cards ✓",
+      reviewLabel: "8 cards · complete",
+      pipsAccessibilityLabel: "8 cards. Show breakdown",
     });
   });
 });

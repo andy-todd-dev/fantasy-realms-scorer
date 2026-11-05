@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type Screen = "hand" | "pickCards";
+export type Screen = "home" | "breakdown";
 
 type NavigationState = {
   screen: Screen;
 };
 
 const initialState: NavigationState = {
-  screen: "hand",
+  screen: "home",
 };
 
 const navigationSlice = createSlice({
