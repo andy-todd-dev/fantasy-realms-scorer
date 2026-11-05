@@ -22,6 +22,7 @@ import {
 type BaseCardId =
   | "beast-master"
   | "enchantress"
+  | "warlock-lord"
   | "king"
   | "queen"
   | "princess"
@@ -31,10 +32,12 @@ type BaseCardId =
   | "unicorn"
   | "warhorse"
   | "hydra"
+  | "dragon"
   | "knights"
   | "elven-archers"
   | "light-cavalry"
   | "rangers"
+  | "dwarvish-infantry"
   | "mountain"
   | "cavern"
   | "forest"
@@ -45,23 +48,25 @@ type BaseCardId =
   | "water-elemental"
   | "war-dirigible"
   | "magic-wand"
+  | "sword-of-keth"
+  | "warship"
+  | "elven-longbow"
   | "smoke"
   | "blizzard"
   | "air-elemental"
   | "rainstorm"
+  | "whirlwind"
   | "fire-elemental"
   | "forge"
   | "lightning"
   | "candle"
+  | "wildfire"
   | "protection-rune"
   | "world-tree"
   | "shield-of-keth"
   | "gem-of-order"
-  | "wildfire"
-  | "dwarvish-infantry"
-  | "dragon"
-  | "book-of-changes"
-  | "sword-of-keth";
+  | "island"
+  | "book-of-changes";
 
 const card = (cardId: BaseCardId): CardIdMatcher => ({ cardId });
 
@@ -92,6 +97,18 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
         points(5, { per: suit("weather") }),
         points(5, { per: suit("flood") }),
         points(5, { per: suit("flame") }),
+      ],
+    },
+  },
+  "warlock-lord": {
+    name: "Warlock Lord",
+    suit: "wizard",
+    baseStrength: 25,
+    penalty: {
+      text: "-10 for each Leader and other Wizard.",
+      effects: [
+        points(-10, { per: suit("leader") }),
+        points(-10, { per: suit("wizard") }),
       ],
     },
   },
@@ -207,6 +224,15 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
       effects: [points(28, { when: present(card("swamp")) })],
     },
   },
+  dragon: {
+    name: "Dragon",
+    suit: "beast",
+    baseStrength: 30,
+    penalty: {
+      text: "-40 unless with at least one Wizard.",
+      effects: [points(-40, { when: absent(suit("wizard")) })],
+    },
+  },
   knights: {
     name: "Knights",
     suit: "army",
@@ -241,6 +267,15 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
     bonus: {
       text: '+10 for each Land. Clears the word "Army" from all penalties.',
       effects: [points(10, { per: suit("land") }), clearPenaltySuitWord("army")],
+    },
+  },
+  "dwarvish-infantry": {
+    name: "Dwarvish Infantry",
+    suit: "army",
+    baseStrength: 15,
+    penalty: {
+      text: "-2 for each other Army.",
+      effects: [points(-2, { per: suit("army") })],
     },
   },
   mountain: {
@@ -356,6 +391,53 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
       effects: [points(25, { when: present(suit("wizard")) })],
     },
   },
+  "sword-of-keth": {
+    name: "Sword of Keth",
+    suit: "weapon",
+    baseStrength: 7,
+    bonus: {
+      text: "+10 with any one Leader, or +40 with both Leader and Shield of Keth.",
+      effects: [
+        // The clauses are alternatives, so the two never add together.
+        points(10, {
+          when: allOf(present(suit("leader")), absent(card("shield-of-keth"))),
+        }),
+        points(40, {
+          when: allOf(present(suit("leader")), present(card("shield-of-keth"))),
+        }),
+      ],
+    },
+  },
+  warship: {
+    name: "Warship",
+    suit: "weapon",
+    baseStrength: 23,
+    bonus: {
+      text: 'Clears the word "Army" from all penalties of all Floods.',
+      effects: [clearPenaltySuitWord("army", suit("flood"))],
+    },
+    penalty: {
+      text: "Blanked unless with at least one Flood.",
+      effects: [blankSelf({ when: absent(suit("flood")) })],
+    },
+  },
+  "elven-longbow": {
+    name: "Elven Longbow",
+    suit: "weapon",
+    baseStrength: 3,
+    bonus: {
+      text: "+30 with Elven Archers, Warlord, or Beast Master.",
+      effects: [
+        points(30, {
+          when: anyOf(
+            present(card("elven-archers")),
+            present(card("warlord")),
+            present(card("beast-master")),
+          ),
+        }),
+      ],
+    },
+  },
   smoke: {
     name: "Smoke",
     suit: "weather",
@@ -402,6 +484,22 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
       effects: [blank(except(suit("flame"), card("lightning")))],
     },
   },
+  whirlwind: {
+    name: "Whirlwind",
+    suit: "weather",
+    baseStrength: 13,
+    bonus: {
+      text: "+40 with Rainstorm and either Blizzard or Great Flood.",
+      effects: [
+        points(40, {
+          when: allOf(
+            present(card("rainstorm")),
+            anyOf(present(card("blizzard")), present(card("great-flood"))),
+          ),
+        }),
+      ],
+    },
+  },
   "fire-elemental": {
     name: "Fire Elemental",
     suit: "flame",
@@ -446,6 +544,24 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
             present(suit("wizard")),
           ),
         }),
+      ],
+    },
+  },
+  wildfire: {
+    name: "Wildfire",
+    suit: "flame",
+    baseStrength: 40,
+    penalty: {
+      text: "BLANKS all cards except Flames, Wizards, Weather, Weapons, Artifacts, Mountain, Great Flood, Island, Unicorn and Dragon.",
+      effects: [
+        blank(
+          suit("army"),
+          suit("leader"),
+          except(suit("beast"), card("unicorn"), card("dragon")),
+          except(suit("land"), card("mountain")),
+          except(suit("flood"), card("great-flood"), card("island")),
+          suit("wild"),
+        ),
       ],
     },
   },
@@ -501,34 +617,18 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
       ],
     },
   },
-  // Placeholders: these exist only so that other cards' rules can name them: Wildfire for
-  // Mountain, Dwarvish Infantry
-  // and Dragon for Cavern, Book of Changes for Candle, Sword of Keth for Shield of Keth. Their suit and base strength are arbitrary,
-  // not the printed values, and they have no rules yet. Replace them with the real card details
-  // when those cards are added.
-  wildfire: {
-    name: "Wildfire",
-    suit: "wild",
-    baseStrength: 2,
-  },
-  "dwarvish-infantry": {
-    name: "Dwarvish Infantry",
-    suit: "wild",
+  // Placeholders: these exist only so that other cards' rules can name them: Island for
+  // Wildfire, Book of Changes for Candle. Their suit and base strength are arbitrary,
+  // not the printed values, except that Island's suit is real. They have no rules yet. Replace them
+  // with the real card details when those cards are added.
+  island: {
+    name: "Island",
+    suit: "flood",
     baseStrength: 1,
-  },
-  dragon: {
-    name: "Dragon",
-    suit: "wild",
-    baseStrength: 2,
   },
   "book-of-changes": {
     name: "Book of Changes",
     suit: "wild",
     baseStrength: 3,
-  },
-  "sword-of-keth": {
-    name: "Sword of Keth",
-    suit: "wild",
-    baseStrength: 5,
   },
 };

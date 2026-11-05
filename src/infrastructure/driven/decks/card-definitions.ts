@@ -82,7 +82,12 @@ export const clearPenalty = (...targets: CardMatcher[]): CardEffect => ({
   targets,
 });
 
-export const clearPenaltySuitWord = (suitName: Suit): CardEffect => ({
+// With no targets, this clears the word from every other card's penalties.
+export const clearPenaltySuitWord = (
+  suitName: Suit,
+  ...targets: CardMatcher[]
+): CardEffect => ({
   kind: "clearPenaltySuitWord",
   suit: suitName,
+  ...(targets.length > 0 && { targets }),
 });
