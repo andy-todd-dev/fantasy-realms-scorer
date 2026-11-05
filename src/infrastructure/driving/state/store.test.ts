@@ -234,15 +234,27 @@ describe("tracking progress towards a full hand", () => {
 });
 
 describe("ordering the card sections", () => {
-  it("follows the design's suit order, not the catalogue's", async () => {
-    const wild: Card = { id: "mirage", name: "Mirage", suit: "wild", baseStrength: 0 };
-    const store = createStore(async () => [wild, king, knights]);
+  it("lists suits alphabetically, not in the catalogue's order", async () => {
+    const mirage: Card = { id: "mirage", name: "Mirage", suit: "wild", baseStrength: 0 };
+    const collector: Card = { id: "collector", name: "Collector", suit: "wizard", baseStrength: 7 };
+    const store = createStore(async () => [collector, mirage, king, knights]);
     await store.dispatch(loadCards());
 
     expect(selectCardSections(store.getState()).map(({ suit }) => suit)).toEqual([
       "army",
       "leader",
       "wild",
+      "wizard",
+    ]);
+  });
+
+  it("lists cards alphabetically within a suit, not in the catalogue's order", async () => {
+    const store = createStore(async () => [queen, king]);
+    await store.dispatch(loadCards());
+
+    expect(selectCardSections(store.getState())[0].cards.map(({ name }) => name)).toEqual([
+      "King",
+      "Queen",
     ]);
   });
 });

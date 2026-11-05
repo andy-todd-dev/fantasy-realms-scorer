@@ -1,0 +1,115 @@
+@import "tailwindcss/theme.css" layer(theme);
+/* Tailwind's preflight is left out, as it's a reset for browser defaults that React Native doesn't have. */
+@import "tailwindcss/utilities.css" source(none);
+@import "nativewind/theme";
+
+/* Only this folder uses classes. Otherwise Tailwind also generates them from words in docs and mockups. */
+@source ".";
+
+/* Tailwind reads this as a class in the fontVariant value in HandScreen, but it does nothing on native. */
+@source not inline("tabular-nums");
+
+/* The app is dark-only, so there is one set of values, and GluestackUIProvider is fixed to dark.
+   Values are design tokens from design/mockups/DESIGN-NOTES.md, as space-separated RGB channels. */
+@layer theme {
+  :root {
+    /* Gluestack's semantic tokens */
+    --background: 20 24 33;
+    --foreground: 237 233 224;
+    --card: 30 36 48;
+    --card-foreground: 237 233 224;
+    --popover: 30 36 48;
+    --popover-foreground: 237 233 224;
+    --primary: 227 183 91;
+    --primary-foreground: 26 20 8;
+    --secondary: 42 50 66;
+    --secondary-foreground: 237 233 224;
+    --muted: 26 31 42;
+    --muted-foreground: 169 176 189;
+    --accent: 46 42 30;
+    --accent-foreground: 243 228 190;
+    --destructive: 255 138 138;
+    --border: 44 51 67;
+    --input: 58 66 82;
+    --ring: 227 183 91;
+
+    /* App-specific tokens */
+    --primary-pressed: 240 205 130;
+    --subtle-foreground: 201 206 216;
+    --icon: 141 149 163;
+    --chip: 35 42 56;
+    --border-strong: 74 82 98;
+    --warning: 240 138 93;
+    --warning-muted: 42 31 26;
+    --warning-foreground: 248 181 150;
+    --success: 157 212 154;
+    --camera: 11 13 18;
+
+    /* Suit colours, matching the printed cards */
+    --suit-army: 0 0 0;
+    --suit-artifact: 230 126 34;
+    --suit-beast: 30 123 58;
+    --suit-flame: 217 54 54;
+    --suit-flood: 31 79 168;
+    --suit-land: 139 90 43;
+    --suit-leader: 142 68 201;
+    --suit-weapon: 180 184 190;
+    --suit-weather: 124 196 238;
+    --suit-wild: 230 232 234;
+    --suit-wizard: 238 127 184;
+    --suit-dot-ring: 141 149 163;
+  }
+}
+
+@theme inline {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+
+  --color-primary-pressed: rgb(var(--primary-pressed));
+  --color-subtle-foreground: rgb(var(--subtle-foreground));
+  --color-icon: rgb(var(--icon));
+  --color-chip: rgb(var(--chip));
+  --color-border-strong: rgb(var(--border-strong));
+  --color-warning: rgb(var(--warning));
+  --color-warning-muted: rgb(var(--warning-muted));
+  --color-warning-foreground: rgb(var(--warning-foreground));
+  --color-success: rgb(var(--success));
+  --color-camera: rgb(var(--camera));
+
+  --color-suit-army: rgb(var(--suit-army));
+  --color-suit-artifact: rgb(var(--suit-artifact));
+  --color-suit-beast: rgb(var(--suit-beast));
+  --color-suit-flame: rgb(var(--suit-flame));
+  --color-suit-flood: rgb(var(--suit-flood));
+  --color-suit-land: rgb(var(--suit-land));
+  --color-suit-leader: rgb(var(--suit-leader));
+  --color-suit-weapon: rgb(var(--suit-weapon));
+  --color-suit-weather: rgb(var(--suit-weather));
+  --color-suit-wild: rgb(var(--suit-wild));
+  --color-suit-wizard: rgb(var(--suit-wizard));
+  --color-suit-dot-ring: rgb(var(--suit-dot-ring));
+
+  /* Each weight is its own family, named as the expo-font plugin in app.json embeds it.
+     Use these rather than font-medium and similar, which don't switch family. */
+  --font-heading: "Marcellus_400Regular";
+  --font-body: "Inter_400Regular";
+  --font-body-medium: "Inter_500Medium";
+  --font-body-semibold: "Inter_600SemiBold";
+  --font-body-bold: "Inter_700Bold";
+}

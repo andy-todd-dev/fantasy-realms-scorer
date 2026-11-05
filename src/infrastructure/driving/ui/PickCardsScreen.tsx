@@ -1,13 +1,10 @@
+import Camera from "lucide-react-native/icons/camera";
+import Check from "lucide-react-native/icons/check";
+import ChevronLeft from "lucide-react-native/icons/chevron-left";
+import X from "lucide-react-native/icons/x";
+import type { LucideProps } from "lucide-react-native";
 import { useEffect } from "react";
-import {
-  BackHandler,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { BackHandler, ScrollView } from "react-native";
 import { addCardToHand } from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { screenOpened } from "../state/navigation-slice";
@@ -19,12 +16,22 @@ import {
   selectHandCards,
   selectHandProgress,
 } from "../state/selectors";
-import { Button } from "./Button";
-import { Icon } from "./Icon";
+import { Box } from "./gluestack/box";
+import { Button, ButtonIcon, ButtonText } from "./gluestack/button";
+import { Divider } from "./gluestack/divider";
+import { Heading } from "./gluestack/heading";
+import { HStack } from "./gluestack/hstack";
+import { Icon } from "./gluestack/icon";
+import { Pressable } from "./gluestack/pressable";
+import { Text } from "./gluestack/text";
+import { VStack } from "./gluestack/vstack";
+import { Screen } from "./Screen";
 import { SuitDot } from "./SuitDot";
-import { colors, fonts, SUITS } from "./theme";
+import { SUITS } from "./theme";
 
-const COLUMNS = 3;
+// Gluestack's Icon doesn't type strokeWidth, so these heavier weights from the design are set here.
+const HeavyCheck = (props: LucideProps) => <Check {...props} strokeWidth={3} />;
+const HeavyX = (props: LucideProps) => <X {...props} strokeWidth={2.5} />;
 
 export function PickCardsScreen() {
   const dispatch = useAppDispatch();
@@ -39,36 +46,32 @@ export function PickCardsScreen() {
   }, [dispatch]);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable
-          testID="back-to-hand"
-          accessibilityRole="button"
-          accessibilityLabel="Back to hand"
-          onPress={() => dispatch(screenOpened("hand"))}
-          style={styles.back}
-        >
-          <Icon name="back" size={22} color={colors.text} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>
-          Pick your cards
-        </Text>
+    <Screen>
+      <HStack className="items-center gap-1 px-3 pb-1.5 pt-4">
         <Button
-          testID="pick-scan"
-          label="Scan"
-          variant="outline"
-          icon="camera"
-          iconSize={16}
-          disabled
-          style={styles.scan}
-          labelStyle={styles.scanLabel}
-        />
-      </View>
-      <Text style={styles.hint}>Tap a card to add it. Tap again to remove it.</Text>
+          testID="back-to-hand"
+          accessibilityLabel="Back to hand"
+          variant="ghost"
+          size="icon"
+          onPress={() => dispatch(screenOpened("hand"))}
+        >
+          <ButtonIcon as={ChevronLeft} className="h-5.5 w-5.5" />
+        </Button>
+        <Heading size="xl" accessibilityRole="header" className="flex-1">
+          Pick your cards
+        </Heading>
+        <Button testID="pick-scan" variant="outline" size="sm" isDisabled className="px-3">
+          <ButtonIcon as={Camera} className="h-4 w-4" />
+          <ButtonText>Scan</ButtonText>
+        </Button>
+      </HStack>
+      <Text size="sm" className="mx-5 mb-2 text-muted-foreground">
+        Tap a card to add it. Tap again to remove it.
+      </Text>
 
       <Grid />
       <Tray />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -77,15 +80,15 @@ function Grid() {
   const sections = useAppSelector(selectCardSections);
 
   if (status === "failed") {
-    return <Text style={styles.status}>Could not load cards.</Text>;
+    return <Text size="sm" className="flex-1 p-5 text-muted-foreground">Could not load cards.</Text>;
   }
 
   if (status !== "loaded") {
-    return <Text style={styles.status}>Loading cards...</Text>;
+    return <Text size="sm" className="flex-1 p-5 text-muted-foreground">Loading cards...</Text>;
   }
 
   return (
-    <ScrollView style={styles.grid} contentContainerStyle={styles.gridContent}>
+    <ScrollView className="flex-1" contentContainerClassName="gap-3.5 px-4 pb-4">
       {sections.map((section) => (
         <Section key={section.suit} section={section} />
       ))}
@@ -94,31 +97,27 @@ function Grid() {
 }
 
 function Section({ section: { suit, cards } }: { section: CardSection }) {
-  const { label, color } = SUITS[suit];
-  const rows = Array.from({ length: Math.ceil(cards.length / COLUMNS) }, (_, row) =>
-    cards.slice(row * COLUMNS, (row + 1) * COLUMNS),
-  );
-
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <SuitDot color={color} />
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          {label}
+    <VStack className="gap-1.5">
+      <HStack className="items-center gap-2">
+        <SuitDot suit={suit} />
+        <Text
+          accessibilityRole="header"
+          size="xs"
+          className="font-body-semibold uppercase tracking-widest text-subtle-foreground"
+        >
+          {SUITS[suit].label}
         </Text>
-      </View>
-      {rows.map((row) => (
-        <View key={row[0].id} style={styles.row}>
-          {row.map((card) => (
-            <CardTile key={card.id} card={card} />
-          ))}
-          {/* Keeps the tiles in a short row the same width as the others. */}
-          {Array.from({ length: COLUMNS - row.length }, (_, index) => (
-            <View key={index} style={styles.tileSpacer} />
-          ))}
-        </View>
-      ))}
-    </View>
+      </HStack>
+      {/* Padding rather than gap, so that three tiles fill each row exactly, and a short row keeps its widths. */}
+      <Box className="-m-[3px] flex-row flex-wrap">
+        {cards.map((card) => (
+          <Box key={card.id} className="w-1/3 p-[3px]">
+            <CardTile card={card} />
+          </Box>
+        ))}
+      </Box>
+    </VStack>
   );
 }
 
@@ -128,18 +127,22 @@ function CardTile({ card: { id, name, selected } }: { card: CardTileData }) {
   return (
     <Pressable
       testID={`card-tile-${id}`}
-      accessibilityRole="button"
-      accessibilityState={{ selected, disabled: selected }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected, disabled: selected }}
       // Removing a card isn't implemented yet, so a selected tile can't be tapped.
       disabled={selected}
       onPress={() => dispatch(addCardToHand(id))}
-      style={[styles.tile, selected && styles.tileSelected]}
+      className={
+        selected
+          ? "min-h-12 justify-center rounded-lg border-[1.5px] border-primary bg-accent px-2 py-1.5 data-[disabled=true]:opacity-100"
+          : "min-h-12 justify-center rounded-lg border-[1.5px] border-border bg-muted px-2 py-1.5"
+      }
     >
-      <Text style={styles.tileName}>{name}</Text>
+      <Text size="sm" className="pr-3.5 font-body-medium leading-tight">{name}</Text>
       {selected && (
-        <View style={styles.tileCheck}>
-          <Icon name="check" size={14} color={colors.accent} strokeWidth={3} />
-        </View>
+        <Box className="absolute right-1.5 top-1.5">
+          <Icon as={HeavyCheck} className="h-3.5 w-3.5 text-primary" />
+        </Box>
       )}
     </Pressable>
   );
@@ -150,156 +153,48 @@ function Tray() {
   const { remaining, isComplete, countLabel } = useAppSelector(selectHandProgress);
 
   return (
-    <View style={styles.tray}>
-      <View style={styles.trayHeader}>
-        <Text accessibilityRole="header" style={styles.trayTitle}>
-          Your hand
-        </Text>
-        <Text testID="hand-progress" style={styles.trayCount}>
-          {countLabel}
-        </Text>
-      </View>
-      <View style={styles.chips}>
-        {cards.map((card) => (
-          <Pressable
-            key={card.id}
-            testID={`hand-chip-${card.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={`Remove ${card.name}`}
-            disabled
-            hitSlop={{ top: 4, bottom: 4 }}
-            style={styles.chip}
-          >
-            <SuitDot color={SUITS[card.suit].color} size={8} />
-            <Text style={styles.chipName}>{card.name}</Text>
-            <View style={styles.chipRemove}>
-              <Icon name="close" size={14} color={colors.textMuted} strokeWidth={2.5} />
-            </View>
-          </Pressable>
-        ))}
-      </View>
-      {isComplete ? (
-        <Button
-          testID="see-score"
-          label="Hand complete: see score"
-          variant="accent"
-          disabled
-          style={styles.seeScore}
-          labelStyle={styles.seeScoreLabel}
-        />
-      ) : (
-        <View style={styles.remaining}>
-          <Text testID="remaining-cards" style={styles.remainingText}>
-            Tap {remaining} more {remaining === 1 ? "card" : "cards"}
+    <>
+      <Divider />
+      <VStack className="gap-2.5 bg-muted px-4 pb-7 pt-3">
+        <HStack className="items-baseline justify-between">
+          <Heading size="md" accessibilityRole="header">
+            Your hand
+          </Heading>
+          <Text testID="hand-progress" size="sm" className="font-body-semibold text-primary">
+            {countLabel}
           </Text>
-        </View>
-      )}
-    </View>
+        </HStack>
+        <HStack className="min-h-9 flex-wrap gap-1.5">
+          {cards.map((card) => (
+            <Pressable
+              key={card.id}
+              testID={`hand-chip-${card.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove ${card.name}`}
+              disabled
+              hitSlop={{ top: 4, bottom: 4 }}
+              className="min-h-9 flex-row items-center gap-1.5 rounded-full border border-input bg-chip pl-2.5 pr-2 data-[disabled=true]:opacity-100"
+            >
+              <SuitDot suit={card.suit} size="sm" />
+              <Text size="sm" className="font-body-medium">{card.name}</Text>
+              <Box className="opacity-40">
+                <Icon as={HeavyX} className="h-3.5 w-3.5 text-muted-foreground" />
+              </Box>
+            </Pressable>
+          ))}
+        </HStack>
+        {isComplete ? (
+          <Button testID="see-score" size="lg" isDisabled>
+            <ButtonText>Hand complete: see score</ButtonText>
+          </Button>
+        ) : (
+          <Box className="min-h-14 items-center justify-center rounded-2xl border border-dashed border-input">
+            <Text testID="remaining-cards" className="text-muted-foreground">
+              Tap {remaining} more {remaining === 1 ? "card" : "cards"}
+            </Text>
+          </Box>
+        )}
+      </VStack>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingTop: 16,
-    paddingHorizontal: 12,
-    paddingBottom: 6,
-  },
-  back: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, fontFamily: fonts.display, fontSize: 22, color: colors.text },
-  scan: { paddingHorizontal: 12, borderRadius: 22, gap: 6 },
-  scanLabel: { fontFamily: fonts.medium, fontSize: 14 },
-  hint: {
-    marginHorizontal: 20,
-    marginBottom: 8,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  status: {
-    flex: 1,
-    padding: 20,
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  grid: { flex: 1 },
-  gridContent: { gap: 14, paddingHorizontal: 16, paddingBottom: 16 },
-  section: { gap: 6 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sectionTitle: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-    letterSpacing: 0.96,
-    textTransform: "uppercase",
-    color: colors.textSoft,
-  },
-  row: { flexDirection: "row", gap: 6 },
-  tile: {
-    flex: 1,
-    minHeight: 48,
-    paddingVertical: 6,
-    paddingLeft: 8,
-    paddingRight: 22,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.row,
-    justifyContent: "center",
-  },
-  tileSelected: { borderColor: colors.accent, backgroundColor: colors.selected },
-  tileSpacer: { flex: 1 },
-  tileName: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    lineHeight: 16,
-    color: colors.text,
-  },
-  tileCheck: { position: "absolute", top: 6, right: 6 },
-  tray: {
-    gap: 10,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 28,
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceBorder,
-    backgroundColor: colors.row,
-  },
-  trayHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-  },
-  trayTitle: { fontFamily: fonts.display, fontSize: 17, color: colors.text },
-  trayCount: { fontFamily: fonts.semiBold, fontSize: 14, color: colors.accent },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, minHeight: 36 },
-  chip: {
-    minHeight: 36,
-    paddingLeft: 10,
-    paddingRight: 8,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: colors.chip,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  chipName: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
-  chipRemove: { opacity: 0.4 },
-  seeScore: { minHeight: 52, borderRadius: 14 },
-  seeScoreLabel: { fontSize: 16 },
-  remaining: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.outline,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  remainingText: { fontFamily: fonts.regular, fontSize: 15, color: colors.textMuted },
-});

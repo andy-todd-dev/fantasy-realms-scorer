@@ -1,12 +1,16 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require("eslint-config-expo/flat");
+const betterTailwindcss = require("eslint-plugin-better-tailwindcss");
 
 const wiring = ["./src/composition-root.ts", "./src/main.tsx"];
 const application = "./src/application";
 const infrastructure = "./src/infrastructure";
 const driven = "./src/infrastructure/driven";
 const driving = "./src/infrastructure/driving";
+const ui = "src/infrastructure/driving/ui";
+const gluestack = `${ui}/gluestack/**`;
+const classProps = "^(?:className|contentContainerClassName)$";
 
 const reactPackages = ["react", "react-*", "expo", "expo-*"];
 const reduxPackages = ["@reduxjs/toolkit", "@reduxjs/toolkit/*", "react-redux"];
@@ -66,4 +70,26 @@ module.exports = defineConfig([
   ),
   restrictPackages(["src/infrastructure/driven/**"], [...reduxPackages, ...awilix]),
   restrictPackages(["src/infrastructure/driving/**", "src/main.tsx"], awilix),
+  {
+    // Catches mistyped class names, which React Native would otherwise silently ignore.
+    // The copied Gluestack components are left out, as they carry classes for web and for tokens we don't define.
+    files: [`${ui}/**/*.tsx`],
+    ignores: [gluestack],
+    plugins: { "better-tailwindcss": betterTailwindcss },
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: `${ui}/global.css`,
+        selectors: [
+          { kind: "attribute", name: classProps },
+          { kind: "attribute", name: classProps, match: [{ type: "strings" }] },
+        ],
+      },
+    },
+    rules: { "better-tailwindcss/no-unknown-classes": "error" },
+  },
+  {
+    // Copied from Gluestack and re-copied on updates, so left in the form they come in.
+    files: [gluestack],
+    rules: { "import/no-duplicates": "off" },
+  },
 ]);

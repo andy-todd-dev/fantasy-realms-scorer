@@ -1,24 +1,8 @@
 import { createSelector } from "@reduxjs/toolkit";
-import type { Suit } from "../../../domain/card";
 import type { RootState } from "./store";
 
 // Display only: the target for a hand, not a limit. The Necromancer allows an 8th card.
 const HAND_SIZE = 7;
-
-// A Record, so that adding a suit without giving it a place is a type error.
-const SUIT_ORDER: Record<Suit, number> = {
-  army: 0,
-  wizard: 1,
-  leader: 2,
-  beast: 3,
-  land: 4,
-  flood: 5,
-  weather: 6,
-  flame: 7,
-  weapon: 8,
-  artifact: 9,
-  wild: 10,
-};
 
 const selectCards = (state: RootState) => state.cards.items;
 
@@ -31,11 +15,12 @@ export const selectCardSections = createSelector(
   [selectCards, selectHandCardIds],
   (cards, handCardIds) =>
     [...new Set(cards.map((card) => card.suit))]
-      .sort((a, b) => SUIT_ORDER[a] - SUIT_ORDER[b])
+      .sort((a, b) => a.localeCompare(b))
       .map((suit) => ({
         suit,
         cards: cards
           .filter((card) => card.suit === suit)
+          .sort((a, b) => a.name.localeCompare(b.name))
           .map(({ id, name }) => ({
             id,
             name,

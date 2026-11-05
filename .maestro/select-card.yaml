@@ -27,8 +27,13 @@ appId: dev.andytodd.fantasyrealmsscorer
 # Cards load through the real wiring
 - tapOn:
     id: pick-cards
-- assertVisible:
-    id: card-tile-king
+# Leaders are partway down the alphabetical list, so scroll to them. Centring keeps the tiles
+# clear of the hand tray, which grows as cards are added.
+- scrollUntilVisible:
+    element:
+      id: card-tile-king
+    direction: DOWN
+    centerElement: true
 - assertVisible:
     id: card-tile-queen
 - assertVisible: "0 of 7"
