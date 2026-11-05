@@ -1,4 +1,4 @@
-appId: dev.andytodd.fantasyrealmsscorer
+appId: dev.andytodd.realmsscorer
 ---
 - runFlow: subflows/open-app.yaml
 
