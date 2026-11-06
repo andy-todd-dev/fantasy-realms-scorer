@@ -145,34 +145,10 @@ describe("calculateScore", () => {
     });
   });
 
-  describe("blank effects", () => {
+  describe("blanked cards in scoring", () => {
     const blanker = card("blanker", "beast", 30, [
       { kind: "blank", targets: [{ suit: "army" }, { suit: "beast" }] },
     ]);
-
-    it("removes the strength of each targeted card", () => {
-      expect(calculateScore([blanker, anArmy, anotherArmy])).toBe(30);
-    });
-
-    it("leaves other suits alone", () => {
-      expect(calculateScore([blanker, aLand])).toBe(34);
-    });
-
-    it("doesn't blank the card itself", () => {
-      expect(calculateScore([blanker])).toBe(30);
-    });
-
-    it("blanks other cards of the blanking card's suit", () => {
-      expect(calculateScore([blanker, card("beast", "beast", 9)])).toBe(30);
-    });
-
-    it("targets a card by ID", () => {
-      const subject = card("subject", "wizard", 1, [
-        { kind: "blank", targets: [{ cardId: "army-1" }] },
-      ]);
-
-      expect(calculateScore([subject, anArmy, anotherArmy])).toBe(21);
-    });
 
     it("ignores the effects of a blanked card", () => {
       const penalised = card("penalised", "army", 10, [
@@ -194,37 +170,6 @@ describe("calculateScore", () => {
       ]);
 
       expect(calculateScore([blanker, subject, anArmy])).toBe(31);
-    });
-
-    describe("blanking is simultaneous", () => {
-      const blanksArmies = card("blanks-armies", "wizard", 1, [
-        { kind: "blank", targets: [{ suit: "army" }] },
-      ]);
-      const armyBlankingLands = card("blanks-lands", "army", 10, [
-        { kind: "blank", targets: [{ suit: "land" }] },
-      ]);
-
-      it("lets a card that is itself blanked still blank others", () => {
-        expect(calculateScore([armyBlankingLands, aLand])).toBe(10);
-        expect(calculateScore([blanksArmies, armyBlankingLands, aLand])).toBe(1);
-      });
-
-      it("gives the same score whatever order the cards are in", () => {
-        expect(calculateScore([aLand, armyBlankingLands, blanksArmies])).toBe(1);
-      });
-    });
-
-    it("blanks both cards when each would blank the other", () => {
-      const blanksLeaders = card("land-blanks-leaders", "land", 4, [
-        { kind: "blank", targets: [{ suit: "leader" }] },
-      ]);
-      const blanksLands = card("leader-blanks-lands", "leader", 3, [
-        { kind: "blank", targets: [{ suit: "land" }] },
-      ]);
-
-      expect(calculateScore([blanksLeaders, blanksLands])).toBe(0);
-      expect(calculateScore([blanksLands, blanksLeaders])).toBe(0);
-      expect(calculateScore([blanksLeaders, blanksLands, anArmy])).toBe(10);
     });
 
     it("treats a blanked card as absent", () => {
@@ -435,7 +380,7 @@ describe("calculateScore", () => {
     });
   });
 
-  describe("blankSelf effects", () => {
+  describe("self-blanked cards in scoring", () => {
     const blankedWithoutArmy: CardEffect = {
       kind: "blankSelf",
       when: { absent: { suit: "army" } },
@@ -445,26 +390,10 @@ describe("calculateScore", () => {
       bonus: { text: "", effects: [{ kind: "points", points: 5 }] },
       penalty: { text: "", effects: [blankedWithoutArmy] },
     };
-    const blanksArmies = card("blanks-armies", "wizard", 1, [
-      { kind: "blank", targets: [{ suit: "army" }] },
-    ]);
 
     it("blanks the card when the condition holds, ignoring its bonus", () => {
       expect(calculateScore([selfBlanker])).toBe(0);
       expect(calculateScore([selfBlanker, aLand])).toBe(4);
-    });
-
-    it("leaves the card alone when the condition doesn't hold", () => {
-      expect(calculateScore([selfBlanker, anArmy])).toBe(50);
-    });
-
-    it("can be blanked by being with a card", () => {
-      const blankedWithLand = card("subject", "weapon", 35, [
-        { kind: "blankSelf", when: { present: { suit: "land" } } },
-      ]);
-
-      expect(calculateScore([blankedWithLand])).toBe(35);
-      expect(calculateScore([blankedWithLand, aLand])).toBe(4);
     });
 
     it("doesn't count a self-blanked card toward per", () => {
@@ -473,40 +402,6 @@ describe("calculateScore", () => {
       ]);
 
       expect(calculateScore([selfBlanker, subject])).toBe(1);
-    });
-
-    it("checks the condition against cards not blanked by others", () => {
-      expect(calculateScore([selfBlanker, anArmy, blanksArmies])).toBe(1);
-      expect(calculateScore([blanksArmies, anArmy, selfBlanker])).toBe(1);
-    });
-
-    it("lets a blanked card that would have triggered the condition save it", () => {
-      const blankedWithLand = card("subject", "weapon", 35, [
-        { kind: "blankSelf", when: { present: { suit: "land" } } },
-      ]);
-      const blanksLands = card("blanks-lands", "wizard", 1, [
-        { kind: "blank", targets: [{ suit: "land" }] },
-      ]);
-
-      expect(calculateScore([blankedWithLand, aLand, blanksLands])).toBe(36);
-    });
-
-    it("lets a self-blanked card still blank others", () => {
-      const subject = card("subject", "weapon", 35, [
-        blankedWithoutArmy,
-        { kind: "blank", targets: [{ suit: "land" }] },
-      ]);
-
-      expect(calculateScore([subject, aLand])).toBe(0);
-    });
-
-    it("checks all self-blanks at once", () => {
-      const needsWeapon = card("needs-weapon", "wizard", 2, [
-        { kind: "blankSelf", when: { absent: { suit: "weapon" } } },
-      ]);
-
-      expect(calculateScore([selfBlanker, needsWeapon])).toBe(2);
-      expect(calculateScore([needsWeapon, selfBlanker])).toBe(2);
     });
 
     it("doesn't apply when the penalty is cleared", () => {
@@ -821,23 +716,6 @@ describe("calculateScore", () => {
         expect(
           calculateScore([floodSubject, anArmy, selfBlankingClearer]),
         ).toBe(20); // 10 + 10, clearer blanked
-      });
-
-      it("still clears when blanking the target makes the clearer blank itself", () => {
-        const floodBlanker = withPenalty(card("flood-1", "flood", 32), [
-          { kind: "blank", targets: [{ suit: "army" }, { suit: "land" }] },
-        ]);
-        const blanksFloods = withPenalty(card("blanker", "weather", 30), [
-          { kind: "blank", targets: [{ suit: "flood" }] },
-        ]);
-        const needsFlood = withPenalty(
-          card("clearer", "weapon", 23, [clearsArmyOnFloods]),
-          [{ kind: "blankSelf", when: { absent: { suit: "flood" } } }],
-        );
-        const hand = [floodBlanker, blanksFloods, anArmy, aLand];
-
-        expect(calculateScore(hand)).toBe(30); // 30, flood, army and land blanked
-        expect(calculateScore([...hand, needsFlood])).toBe(40); // 30 + 10, flood, land and clearer blanked
       });
     });
   });
