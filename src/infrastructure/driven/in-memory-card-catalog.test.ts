@@ -1,8 +1,23 @@
 import { CARDS, DECKS, InMemoryCardCatalog } from "./in-memory-card-catalog";
 
-const king = { id: "king", name: "King", suit: "leader", baseStrength: 8 } as const;
-const queen = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 } as const;
-const unicorn = { id: "unicorn", name: "Unicorn", suit: "beast", baseStrength: 9 } as const;
+const king = {
+  id: "king",
+  name: "King",
+  suit: "leader",
+  baseStrength: 8,
+} as const;
+const queen = {
+  id: "queen",
+  name: "Queen",
+  suit: "leader",
+  baseStrength: 6,
+} as const;
+const unicorn = {
+  id: "unicorn",
+  name: "Unicorn",
+  suit: "beast",
+  baseStrength: 9,
+} as const;
 
 describe("deck data", () => {
   it("gives every deck a unique ID", () => {

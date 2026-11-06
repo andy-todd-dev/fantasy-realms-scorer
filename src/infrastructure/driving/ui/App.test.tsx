@@ -1,4 +1,10 @@
-import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import {
+  act,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from "@testing-library/react-native";
 import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usecase";
 import { ClearHandUseCase } from "../../../application/clear-hand.usecase";
 import { RemoveCardFromHandUseCase } from "../../../application/remove-card-from-hand.usecase";
@@ -6,12 +12,15 @@ import type { Card, CardId } from "../../../domain/card";
 import { createAppStore } from "../state/store";
 import { App } from "./App";
 
-jest.mock("react-native-safe-area-context", () =>
-  jest.requireActual("react-native-safe-area-context/jest/mock").default,
+jest.mock(
+  "react-native-safe-area-context",
+  () => jest.requireActual("react-native-safe-area-context/jest/mock").default,
 );
 
 // Their native modules don't exist under Jest. Reanimated's mock needs Worklets, so mock that too.
-jest.mock("react-native-worklets", () => jest.requireActual("react-native-worklets/lib/module/mock"));
+jest.mock("react-native-worklets", () =>
+  jest.requireActual("react-native-worklets/lib/module/mock"),
+);
 jest.mock("react-native-reanimated", () => ({
   ...jest.requireActual("react-native-reanimated/mock"),
   // Missing from Reanimated's mock.
@@ -21,9 +30,24 @@ jest.mock("react-native-reanimated", () => ({
 // The first render loads all of React Native, which takes over 5s without a Jest cache.
 jest.setTimeout(30000);
 
-const king: Card = { id: "king", name: "King", suit: "leader", baseStrength: 8 };
-const queen: Card = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 };
-const knights: Card = { id: "knights", name: "Knights", suit: "army", baseStrength: 20 };
+const king: Card = {
+  id: "king",
+  name: "King",
+  suit: "leader",
+  baseStrength: 8,
+};
+const queen: Card = {
+  id: "queen",
+  name: "Queen",
+  suit: "leader",
+  baseStrength: 6,
+};
+const knights: Card = {
+  id: "knights",
+  name: "Knights",
+  suit: "army",
+  baseStrength: 20,
+};
 const cards = [king, queen, knights];
 
 const eightCards: Card[] = Array.from({ length: 8 }, (_, index) => ({
@@ -68,7 +92,9 @@ async function renderApp({
 }
 
 const expectScore = (score: string) =>
-  waitFor(() => expect(screen.getByTestId("hand-score")).toHaveTextContent(score));
+  waitFor(() =>
+    expect(screen.getByTestId("hand-score")).toHaveTextContent(score),
+  );
 
 describe("scoring", () => {
   it("requests a score for the empty hand on start", async () => {
@@ -88,14 +114,18 @@ describe("scoring", () => {
     await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith(["king"]));
     await expectScore("8");
     await tapCard("queen");
-    await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith(["king", "queen"]));
+    await waitFor(() =>
+      expect(scoreHand).toHaveBeenLastCalledWith(["king", "queen"]),
+    );
 
     await expectScore("14");
   });
 
   it("doesn't request a score when only the screen changes", async () => {
     const scoreHand = jest.fn(sumStrengths);
-    const { showBreakdown, backToCards, tapCard } = await renderApp({ scoreHand });
+    const { showBreakdown, backToCards, tapCard } = await renderApp({
+      scoreHand,
+    });
 
     await tapCard("king");
     await expectScore("8");
@@ -139,7 +169,9 @@ describe("the home screen", () => {
     await renderApp();
 
     expect(await screen.findByTestId("card-tile-king")).toBeOnTheScreen();
-    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    expect(screen.getByTestId("hand-count")).toHaveTextContent(
+      "Tap cards or scan",
+    );
     expect(screen.queryByTestId("breakdown-total")).toBeNull();
   });
 
@@ -167,7 +199,9 @@ describe("the home screen", () => {
 
     expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
     expect(screen.getByTestId("card-tile-queen")).not.toBeChecked();
-    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    expect(screen.getByTestId("hand-count")).toHaveTextContent(
+      "Tap cards or scan",
+    );
     expect(screen.getByTestId("show-breakdown")).toBeDisabled();
     expect(screen.getByTestId("clear-hand")).toBeDisabled();
     await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith([]));
@@ -218,7 +252,10 @@ describe("the home screen", () => {
 
     expect(screen.getByTestId("card-tile-king")).toBeChecked();
     expect(screen.getByTestId("hand-count")).toHaveTextContent("1 of 7 cards");
-    expect(screen.getByTestId("hand-pips")).toHaveProp("accessibilityLabel", "1 of 7 cards. Show breakdown");
+    expect(screen.getByTestId("hand-pips")).toHaveProp(
+      "accessibilityLabel",
+      "1 of 7 cards. Show breakdown",
+    );
   });
 
   it("confirms a full hand at 7 cards, and still allows an 8th", async () => {
@@ -264,9 +301,13 @@ describe("the breakdown screen", () => {
     await expectScore("14");
     await showBreakdown();
 
-    expect(screen.getByTestId("breakdown-title")).toHaveTextContent("Your hand: 14");
+    expect(screen.getByTestId("breakdown-title")).toHaveTextContent(
+      "Your hand: 14",
+    );
     expect(screen.getByTestId("breakdown-total")).toHaveTextContent("14");
-    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("2 of 7 cards");
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent(
+      "2 of 7 cards",
+    );
     expect(
       screen.getAllByTestId(/^breakdown-card-/).map((row) => row.props.testID),
     ).toEqual(["breakdown-card-queen", "breakdown-card-king"]);
@@ -303,13 +344,17 @@ describe("the breakdown screen", () => {
     }
     await showBreakdown();
 
-    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("7 cards · complete");
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent(
+      "7 cards · complete",
+    );
 
     await backToCards();
     await tapCard("card-7");
     await showBreakdown();
 
-    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("8 cards · complete");
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent(
+      "8 cards · complete",
+    );
   });
 
   it("removes a card in place, and rescores", async () => {
@@ -326,8 +371,12 @@ describe("the breakdown screen", () => {
 
     expect(screen.queryByTestId("breakdown-card-king")).toBeNull();
     expect(screen.getByTestId("breakdown-card-queen")).toBeOnTheScreen();
-    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("1 of 7 cards");
-    await waitFor(() => expect(screen.getByTestId("breakdown-total")).toHaveTextContent("6"));
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent(
+      "1 of 7 cards",
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("breakdown-total")).toHaveTextContent("6"),
+    );
   });
 
   it("returns to the grid when the last card is removed", async () => {
@@ -339,7 +388,9 @@ describe("the breakdown screen", () => {
 
     expect(screen.queryByTestId("breakdown-total")).toBeNull();
     expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
-    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    expect(screen.getByTestId("hand-count")).toHaveTextContent(
+      "Tap cards or scan",
+    );
     await expectScore("0");
   });
 

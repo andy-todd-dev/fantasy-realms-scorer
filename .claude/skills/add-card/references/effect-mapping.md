@@ -6,29 +6,29 @@ This describes the engine as of when it was written. `src/domain/card.ts` and `s
 
 Helpers are in `src/infrastructure/driven/decks/card-definitions.ts`. `card("x")` is the local helper in `base.cards.ts`.
 
-| Printed wording | Effect |
-|---|---|
-| `+N` or `-N`, unconditional | `points(N)` |
-| "+N for each X" | `points(N, { per: suit("x") })` |
-| "+N for each X and Y" | two effects: `points(N, { per: suit("x") })`, `points(N, { per: suit("y") })` |
-| "+N with X", "+N with any one X" | `points(N, { when: present(suit("x")) })` (no `per`, since it applies once) |
-| "+N with the named card" | `points(N, { when: present(card("x")) })` |
-| "-N unless with X" | `points(-N, { when: absent(suit("x")) })` |
-| "+N if no X" | `points(N, { when: absent(suit("x")) })` |
-| "+A for each X. OR +B for each X if with Y" | `points(A, { per, when: absent(Y) })`, `points(B, { per, when: present(Y) })` |
-| "+N with both X and Y" | `points(N, { when: allOf(present(...), present(...)) })` |
-| "+N with X or Y" | `points(N, { when: anyOf(present(...), present(...)) })` (applies once, however many match) |
-| "+A with X, or +B with Y", where both could hold and X takes precedence | `points(A, { when: present(X) })`, `points(B, { when: allOf(absent(X), present(Y)) })` |
-| "+N if every non-blanked card is a different suit" | `points(N, { when: allSuitsDifferent })` (includes the card's own suit, Wild counts as a suit, and part-built hands qualify) |
-| "+A for a 3-card run, +B for a 4-card run", on base strengths | `baseStrengthRun([{ length: 3, points: A }, { length: 4, points: B }])` (includes the card's own strength; duplicates do nothing; only the longest run pays, at its highest tier, without adding up; longer than the top tier pays nothing extra) |
-| "The sum of the base strength of all X" | `sum(suit("x"), "baseStrength")` (never counts its owner; blanked cards add nothing; other cards' bonuses and penalties stay out of it) |
-| "BLANKS all X and Y" | `blank(suit("x"), suit("y"))` |
-| "BLANKS all X except the named card" | `blank(except(suit("x"), card("y")))` (`except` works wherever a suit matcher does, including `per`, `when` and clears) |
-| "BLANKS the named card" | `blank(card("x"))` |
-| "Blanked unless with X" | `blankSelf({ when: absent(suit("x")) })` |
-| "Blanked with any X" | `blankSelf({ when: present(suit("x")) })` |
-| "Clears the penalty on all X" | `clearPenalty(suit("x"))` |
-| "Clears the word X from all penalties" | `clearPenaltySuitWord("x")` (plurals in a card's text don't matter, because effects name the suit) |
+| Printed wording                                                         | Effect                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `+N` or `-N`, unconditional                                             | `points(N)`                                                                                                                                                                                                                                       |
+| "+N for each X"                                                         | `points(N, { per: suit("x") })`                                                                                                                                                                                                                   |
+| "+N for each X and Y"                                                   | two effects: `points(N, { per: suit("x") })`, `points(N, { per: suit("y") })`                                                                                                                                                                     |
+| "+N with X", "+N with any one X"                                        | `points(N, { when: present(suit("x")) })` (no `per`, since it applies once)                                                                                                                                                                       |
+| "+N with the named card"                                                | `points(N, { when: present(card("x")) })`                                                                                                                                                                                                         |
+| "-N unless with X"                                                      | `points(-N, { when: absent(suit("x")) })`                                                                                                                                                                                                         |
+| "+N if no X"                                                            | `points(N, { when: absent(suit("x")) })`                                                                                                                                                                                                          |
+| "+A for each X. OR +B for each X if with Y"                             | `points(A, { per, when: absent(Y) })`, `points(B, { per, when: present(Y) })`                                                                                                                                                                     |
+| "+N with both X and Y"                                                  | `points(N, { when: allOf(present(...), present(...)) })`                                                                                                                                                                                          |
+| "+N with X or Y"                                                        | `points(N, { when: anyOf(present(...), present(...)) })` (applies once, however many match)                                                                                                                                                       |
+| "+A with X, or +B with Y", where both could hold and X takes precedence | `points(A, { when: present(X) })`, `points(B, { when: allOf(absent(X), present(Y)) })`                                                                                                                                                            |
+| "+N if every non-blanked card is a different suit"                      | `points(N, { when: allSuitsDifferent })` (includes the card's own suit, Wild counts as a suit, and part-built hands qualify)                                                                                                                      |
+| "+A for a 3-card run, +B for a 4-card run", on base strengths           | `baseStrengthRun([{ length: 3, points: A }, { length: 4, points: B }])` (includes the card's own strength; duplicates do nothing; only the longest run pays, at its highest tier, without adding up; longer than the top tier pays nothing extra) |
+| "The sum of the base strength of all X"                                 | `sum(suit("x"), "baseStrength")` (never counts its owner; blanked cards add nothing; other cards' bonuses and penalties stay out of it)                                                                                                           |
+| "BLANKS all X and Y"                                                    | `blank(suit("x"), suit("y"))`                                                                                                                                                                                                                     |
+| "BLANKS all X except the named card"                                    | `blank(except(suit("x"), card("y")))` (`except` works wherever a suit matcher does, including `per`, `when` and clears)                                                                                                                           |
+| "BLANKS the named card"                                                 | `blank(card("x"))`                                                                                                                                                                                                                                |
+| "Blanked unless with X"                                                 | `blankSelf({ when: absent(suit("x")) })`                                                                                                                                                                                                          |
+| "Blanked with any X"                                                    | `blankSelf({ when: present(suit("x")) })`                                                                                                                                                                                                         |
+| "Clears the penalty on all X"                                           | `clearPenalty(suit("x"))`                                                                                                                                                                                                                         |
+| "Clears the word X from all penalties"                                  | `clearPenaltySuitWord("x")` (plurals in a card's text don't matter, because effects name the suit)                                                                                                                                                |
 
 **"OR" needs care.** Effects don't exclude each other on their own: every effect whose condition holds is added. King and Queen work because `absent(Y)` and `present(Y)` can never both be true. When both conditions could hold, make them exclusive by adding `absent` of the clause that takes precedence to the other clause, as Unicorn does: its Princess clause beats its Empress, Queen, or Enchantress clause. Which clause takes precedence is a rules call, so ask if the card or the user hasn't settled it.
 
@@ -52,14 +52,14 @@ All of this comes from `src/domain/score.ts`:
 
 Each of these goes through the propose-and-confirm step in `SKILL.md`.
 
-| Printed idea | What's missing |
-|---|---|
-| Clearing a word from penalties that isn't a suit | `clearPenaltySuitWord` only removes a suit |
-| Other whole-hand or threshold rules: odd strengths, N of one suit | apart from `allSuitsDifferent` and `baseStrengthRun`, effects only ask whether a card matches, not about the hand as a whole |
-| Values read from other cards, other than summing base strengths: "the highest base strength", "the base strength of any one card" | `points` is a fixed number, and `sum` only adds up its matching cards |
-| Changing identity: new suit or name, duplicating a card | `matches` reads a card's printed suit and ID |
-| Player choices: "any one card of your choice", "you may" | scoring takes only card IDs, so there's nowhere for a choice to come from |
-| Extra cards: an eighth card from the discard | `HAND_SIZE` in `selectors.ts` is only a display target, but picking from the discard isn't modelled |
+| Printed idea                                                                                                                      | What's missing                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Clearing a word from penalties that isn't a suit                                                                                  | `clearPenaltySuitWord` only removes a suit                                                                                   |
+| Other whole-hand or threshold rules: odd strengths, N of one suit                                                                 | apart from `allSuitsDifferent` and `baseStrengthRun`, effects only ask whether a card matches, not about the hand as a whole |
+| Values read from other cards, other than summing base strengths: "the highest base strength", "the base strength of any one card" | `points` is a fixed number, and `sum` only adds up its matching cards                                                        |
+| Changing identity: new suit or name, duplicating a card                                                                           | `matches` reads a card's printed suit and ID                                                                                 |
+| Player choices: "any one card of your choice", "you may"                                                                          | scoring takes only card IDs, so there's nowhere for a choice to come from                                                    |
+| Extra cards: an eighth card from the discard                                                                                      | `HAND_SIZE` in `selectors.ts` is only a display target, but picking from the discard isn't modelled                          |
 
 Resolution order matters for several of these. An effect that changes what other cards are (identity changes) or what their penalties say (clearing a word) has to resolve before blanking, because blanking depends on the result. Say which order you're proposing, and ask if the printed text doesn't settle it.
 

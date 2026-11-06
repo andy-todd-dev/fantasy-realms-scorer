@@ -1,4 +1,9 @@
-import { addCardToHand, emptyHand, isCardInHand, removeCardFromHand } from "./hand";
+import {
+  addCardToHand,
+  emptyHand,
+  isCardInHand,
+  removeCardFromHand,
+} from "./hand";
 
 describe("emptyHand", () => {
   it("has no cards", () => {
@@ -8,7 +13,10 @@ describe("emptyHand", () => {
 
 describe("removeCardFromHand", () => {
   it("removes the card, keeping the order of the rest", () => {
-    expect(removeCardFromHand(["king", "queen", "knights"], "queen")).toEqual(["king", "knights"]);
+    expect(removeCardFromHand(["king", "queen", "knights"], "queen")).toEqual([
+      "king",
+      "knights",
+    ]);
   });
 
   it("leaves the hand unchanged when the card isn't in it", () => {

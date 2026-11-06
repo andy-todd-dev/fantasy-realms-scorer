@@ -9,7 +9,9 @@ describe("except", () => {
 
   it("keeps earlier exceptions when applied again", () => {
     expect(
-      except(except(suit("land"), { cardId: "mountain" }), { cardId: "forest" }),
+      except(except(suit("land"), { cardId: "mountain" }), {
+        cardId: "forest",
+      }),
     ).toEqual({ suit: "land", except: ["mountain", "forest"] });
   });
 });

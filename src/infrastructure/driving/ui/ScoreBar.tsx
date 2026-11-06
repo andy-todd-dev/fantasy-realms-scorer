@@ -31,10 +31,16 @@ export function ScoreBar() {
         style={{ paddingBottom: bottom + BOTTOM_PADDING }}
       >
         <VStack className="min-w-14">
-          <Text size="xs" className="font-body-semibold uppercase tracking-widest text-muted-foreground">
+          <Text
+            size="xs"
+            className="font-body-semibold tracking-widest text-muted-foreground uppercase"
+          >
             Score
           </Text>
-          <Text testID="hand-score" className="font-heading text-3xl text-primary">
+          <Text
+            testID="hand-score"
+            className="font-heading text-3xl text-primary"
+          >
             {score ?? NO_VALUE}
           </Text>
         </VStack>
@@ -76,14 +82,16 @@ export function ScoreBar() {
             isDisabled
             className="min-h-12 border-dashed data-[disabled=true]:opacity-100"
           >
-            <ButtonText className="text-sm text-muted-foreground">Show breakdown</ButtonText>
+            <ButtonText className="text-sm text-muted-foreground">
+              Show breakdown
+            </ButtonText>
           </Button>
         ) : (
           <Button
             key="ready"
             testID="show-breakdown"
             onPress={showBreakdown}
-            className="min-h-12 gap-1 pl-4 pr-3"
+            className="min-h-12 gap-1 pr-3 pl-4"
           >
             <ButtonText className="text-sm">Show breakdown</ButtonText>
             <ButtonIcon as={ChevronRight} className="h-4 w-4" />

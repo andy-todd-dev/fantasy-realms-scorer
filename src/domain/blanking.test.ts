@@ -30,9 +30,11 @@ const orderings = (cards: readonly Card[]): Card[][] =>
 // Checks that exactly the named cards stay in play, whatever order the hand is in.
 const expectInPlay = (cards: readonly Card[], ids: readonly string[]) => {
   orderings(cards).forEach((ordering) => {
-    expect(withoutBlankedCards(ordering).map(({ id }) => id).sort()).toEqual(
-      [...ids].sort(),
-    );
+    expect(
+      withoutBlankedCards(ordering)
+        .map(({ id }) => id)
+        .sort(),
+    ).toEqual([...ids].sort());
   });
 };
 
@@ -47,11 +49,9 @@ describe("withoutBlankedCards", () => {
       { kind: "blank", targets: [{ suit: "land" }] },
     ]);
 
-    expect(withoutBlankedCards([anArmy, aLand, blanksLands, anotherArmy])).toEqual([
-      anArmy,
-      blanksLands,
-      anotherArmy,
-    ]);
+    expect(
+      withoutBlankedCards([anArmy, aLand, blanksLands, anotherArmy]),
+    ).toEqual([anArmy, blanksLands, anotherArmy]);
   });
 
   describe("blank effects", () => {
@@ -110,7 +110,10 @@ describe("withoutBlankedCards", () => {
     });
 
     it("leaves the card alone when the condition doesn't hold", () => {
-      expectInPlay([blankedWithoutArmy, anArmy], ["blanked-without-army", "army-1"]);
+      expectInPlay(
+        [blankedWithoutArmy, anArmy],
+        ["blanked-without-army", "army-1"],
+      );
     });
 
     it("can be blanked by being with a card", () => {
@@ -123,7 +126,10 @@ describe("withoutBlankedCards", () => {
         { kind: "blank", targets: [{ suit: "army" }] },
       ]);
 
-      expectInPlay([blankedWithoutArmy, anArmy, blanksArmies], ["blanks-armies"]);
+      expectInPlay(
+        [blankedWithoutArmy, anArmy, blanksArmies],
+        ["blanks-armies"],
+      );
     });
 
     it("lets a blanked card that would have triggered the condition save it", () => {
@@ -131,7 +137,10 @@ describe("withoutBlankedCards", () => {
         { kind: "blank", targets: [{ suit: "land" }] },
       ]);
 
-      expectInPlay([blankedWithLand, aLand, blanksLands], ["blanked-with-land", "blanks-lands"]);
+      expectInPlay(
+        [blankedWithLand, aLand, blanksLands],
+        ["blanked-with-land", "blanks-lands"],
+      );
     });
 
     it("blanks cards whose self-blanks depend on each other", () => {
@@ -157,7 +166,10 @@ describe("withoutBlankedCards", () => {
         { kind: "blank", targets: [{ suit: "land" }] },
       ]);
 
-      expectInPlay([blanksArmies, armyBlankingLands, aLand], ["blanks-armies", "land-1"]);
+      expectInPlay(
+        [blanksArmies, armyBlankingLands, aLand],
+        ["blanks-armies", "land-1"],
+      );
     });
 
     it("doesn't let a self-blanked card blank others", () => {
@@ -177,7 +189,10 @@ describe("withoutBlankedCards", () => {
         { kind: "blankSelf", when: { present: { suit: "weather" } } },
       ]);
 
-      expectInPlay([blankedWithoutFlame, blankedWithWeather], ["blanked-with-weather"]);
+      expectInPlay(
+        [blankedWithoutFlame, blankedWithWeather],
+        ["blanked-with-weather"],
+      );
     });
 
     it("lets a self-blanked card's absence blank another card", () => {

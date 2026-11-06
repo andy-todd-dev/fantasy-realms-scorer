@@ -4,7 +4,11 @@ import RotateCcw from "lucide-react-native/icons/rotate-ccw";
 import type { LucideProps } from "lucide-react-native";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
-import { addCardToHand, clearHand, removeCardFromHand } from "../state/hand-slice";
+import {
+  addCardToHand,
+  clearHand,
+  removeCardFromHand,
+} from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import {
   CardSection,
@@ -34,7 +38,8 @@ const HeavyCheck = (props: LucideProps) => <Check {...props} strokeWidth={3} />;
 const EDGES_ABOVE_SCORE_BAR = ["top", "left", "right"] as const;
 
 export function HomeScreen() {
-  const { headerHeight, headerStyle, onHeaderLayout, onScroll } = useHideOnScroll();
+  const { headerHeight, headerStyle, onHeaderLayout, onScroll } =
+    useHideOnScroll();
 
   return (
     <Screen edges={EDGES_ABOVE_SCORE_BAR}>
@@ -58,7 +63,7 @@ function Header() {
   const { isEmpty } = useAppSelector(selectHandProgress);
 
   return (
-    <HStack className="items-center gap-2 bg-background px-4 pb-2 pt-4">
+    <HStack className="items-center gap-2 bg-background px-4 pt-4 pb-2">
       <Heading size="xl" accessibilityRole="header" className="flex-1">
         Realms Scorer
       </Heading>
@@ -93,7 +98,9 @@ function Grid({
   if (status === "failed") {
     return (
       <View style={{ paddingTop: headerHeight }}>
-        <Text size="sm" className="p-5 text-muted-foreground">Could not load cards.</Text>
+        <Text size="sm" className="p-5 text-muted-foreground">
+          Could not load cards.
+        </Text>
       </View>
     );
   }
@@ -101,16 +108,22 @@ function Grid({
   if (status !== "loaded") {
     return (
       <View style={{ paddingTop: headerHeight }}>
-        <Text size="sm" className="p-5 text-muted-foreground">Loading cards...</Text>
+        <Text size="sm" className="p-5 text-muted-foreground">
+          Loading cards...
+        </Text>
       </View>
     );
   }
 
   return (
-    <Animated.ScrollView testID="card-grid" onScroll={onScroll} scrollEventThrottle={16}>
+    <Animated.ScrollView
+      testID="card-grid"
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
       {/* Leaves room for the header, which sits over the grid so that hiding it needs no layout pass. */}
       <View style={{ height: headerHeight }} />
-      <VStack className="gap-3 px-4 pb-4 pt-1">
+      <VStack className="gap-3 px-4 pt-1 pb-4">
         {sections.map((section) => (
           <Section key={section.suit} section={section} />
         ))}
@@ -127,7 +140,7 @@ function Section({ section: { suit, cards } }: { section: CardSection }) {
         <Text
           accessibilityRole="header"
           size="xs"
-          className="font-body-semibold uppercase tracking-widest text-subtle-foreground"
+          className="font-body-semibold tracking-widest text-subtle-foreground uppercase"
         >
           {SUITS[suit].label}
         </Text>
@@ -152,16 +165,20 @@ function CardTile({ card: { id, name, selected } }: { card: CardTileData }) {
       testID={`card-tile-${id}`}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
-      onPress={() => dispatch(selected ? removeCardFromHand(id) : addCardToHand(id))}
+      onPress={() =>
+        dispatch(selected ? removeCardFromHand(id) : addCardToHand(id))
+      }
       className={
         selected
           ? "min-h-12 justify-center rounded-lg border-[1.5px] border-primary bg-accent px-2 py-1.5"
           : "min-h-12 justify-center rounded-lg border-[1.5px] border-border bg-muted px-2 py-1.5"
       }
     >
-      <Text size="sm" className="pr-3.5 font-body-medium leading-tight">{name}</Text>
+      <Text size="sm" className="pr-3.5 font-body-medium leading-tight">
+        {name}
+      </Text>
       {selected && (
-        <Box className="absolute right-1.5 top-1.5">
+        <Box className="absolute top-1.5 right-1.5">
           <Icon as={HeavyCheck} className="h-3.5 w-3.5 text-primary" />
         </Box>
       )}

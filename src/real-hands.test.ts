@@ -3,14 +3,18 @@ import { InMemoryCardCatalog } from "./infrastructure/driven/in-memory-card-cata
 
 // Hands scored with the real cards, so they check the card definitions as well as the rules.
 describe("scoring real hands", () => {
-  const scoreHand = new ScoreHandUseCase({ cardCatalog: new InMemoryCardCatalog() });
+  const scoreHand = new ScoreHandUseCase({
+    cardCatalog: new InMemoryCardCatalog(),
+  });
 
   // Every ordering of the hand, as the score must not depend on the order cards were added.
-  const orderings = <T,>(items: readonly T[]): T[][] =>
+  const orderings = <T>(items: readonly T[]): T[][] =>
     items.length <= 1
       ? [[...items]]
       : items.flatMap((item, index) =>
-          orderings([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]),
+          orderings([...items.slice(0, index), ...items.slice(index + 1)]).map(
+            (rest) => [item, ...rest],
+          ),
         );
 
   const expectScore = async (cardIds: readonly string[], expected: number) => {
@@ -53,7 +57,10 @@ describe("scoring real hands", () => {
 
     it("blanks the War Dirigible when a Flame keeps the Smoke in play", async () => {
       // Elven Archers 10 + Smoke 27 + Candle 2.
-      await expectScore(["elven-archers", "war-dirigible", "smoke", "candle"], 39);
+      await expectScore(
+        ["elven-archers", "war-dirigible", "smoke", "candle"],
+        39,
+      );
     });
   });
 

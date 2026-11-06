@@ -1,5 +1,5 @@
 // https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
+const { defineConfig } = require("eslint/config");
 const expoConfig = require("eslint-config-expo/flat");
 const betterTailwindcss = require("eslint-plugin-better-tailwindcss");
 
@@ -10,6 +10,7 @@ const driven = "./src/infrastructure/driven";
 const driving = "./src/infrastructure/driving";
 const ui = "src/infrastructure/driving/ui";
 const gluestack = `${ui}/gluestack/**`;
+// Keep in step with `tailwindAttributes` in .prettierrc.json, which sorts the classes in these props.
 const classProps = "^(?:className|contentContainerClassName)$";
 
 const reactPackages = ["react", "react-*", "expo", "expo-*"];
@@ -37,7 +38,10 @@ module.exports = defineConfig([
         "error",
         {
           zones: [
-            { target: "./src/domain", from: [application, infrastructure, ...wiring] },
+            {
+              target: "./src/domain",
+              from: [application, infrastructure, ...wiring],
+            },
             { target: application, from: [infrastructure, ...wiring] },
             { target: driven, from: [application, driving, ...wiring] },
             { target: driving, from: [driven, ...wiring] },
@@ -57,7 +61,8 @@ module.exports = defineConfig([
             {
               group: ["**/domain/*"],
               allowTypeImports: true,
-              message: "Infrastructure may only use `import type` from the domain.",
+              message:
+                "Infrastructure may only use `import type` from the domain.",
             },
           ],
         },
@@ -68,7 +73,10 @@ module.exports = defineConfig([
     ["src/domain/**", "src/application/**"],
     [...reactPackages, ...reduxPackages, ...awilix],
   ),
-  restrictPackages(["src/infrastructure/driven/**"], [...reduxPackages, ...awilix]),
+  restrictPackages(
+    ["src/infrastructure/driven/**"],
+    [...reduxPackages, ...awilix],
+  ),
   restrictPackages(["src/infrastructure/driving/**", "src/main.tsx"], awilix),
   {
     // Catches mistyped class names, which React Native would otherwise silently ignore.
