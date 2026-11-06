@@ -1,5 +1,7 @@
 import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usecase";
+import { ClearHandUseCase } from "../../../application/clear-hand.usecase";
+import { RemoveCardFromHandUseCase } from "../../../application/remove-card-from-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
 import { createAppStore } from "../state/store";
 import { App } from "./App";
@@ -45,7 +47,9 @@ async function renderApp({
 } = {}) {
   const store = createAppStore({
     addCardToHand: new AddCardToHandUseCase(),
+    clearHand: new ClearHandUseCase(),
     loadCards: { execute: loadCards },
+    removeCardFromHand: new RemoveCardFromHandUseCase(),
     scoreHand: { execute: scoreHand },
   });
   const user = userEvent.setup();
@@ -144,10 +148,49 @@ describe("the home screen", () => {
 
     await tapCard("king");
 
-    expect(screen.getByTestId("clear-hand")).toBeDisabled();
     expect(screen.getByTestId("scan-hand")).toBeDisabled();
-    expect(screen.getByTestId("card-tile-king")).toBeDisabled();
-    expect(screen.getByTestId("card-tile-queen")).toBeEnabled();
+  });
+
+  it("clears the hand, and rescores", async () => {
+    const scoreHand = jest.fn(sumStrengths);
+    const { press, tapCard } = await renderApp({ scoreHand });
+
+    expect(screen.getByTestId("clear-hand")).toBeDisabled();
+
+    await tapCard("king");
+    await tapCard("queen");
+    await expectScore("14");
+
+    expect(screen.getByTestId("clear-hand")).toBeEnabled();
+
+    await press("clear-hand");
+
+    expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
+    expect(screen.getByTestId("card-tile-queen")).not.toBeChecked();
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    expect(screen.getByTestId("show-breakdown")).toBeDisabled();
+    expect(screen.getByTestId("clear-hand")).toBeDisabled();
+    await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith([]));
+    await expectScore("0");
+  });
+
+  it("unselects a card when its tile is tapped again, and rescores", async () => {
+    const scoreHand = jest.fn(sumStrengths);
+    const { tapCard } = await renderApp({ scoreHand });
+
+    await tapCard("king");
+    await tapCard("queen");
+    await expectScore("14");
+
+    expect(screen.getByTestId("card-tile-king")).toBeEnabled();
+
+    await tapCard("king");
+
+    expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
+    expect(screen.getByTestId("card-tile-queen")).toBeChecked();
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("1 of 7 cards");
+    await waitFor(() => expect(scoreHand).toHaveBeenLastCalledWith(["queen"]));
+    await expectScore("6");
   });
 
   it("can't open the breakdown with an empty hand", async () => {
@@ -269,14 +312,35 @@ describe("the breakdown screen", () => {
     expect(screen.getByTestId("breakdown-count")).toHaveTextContent("8 cards · complete");
   });
 
-  it("can't remove a card until removal is implemented", async () => {
-    const { showBreakdown, tapCard } = await renderApp();
+  it("removes a card in place, and rescores", async () => {
+    const { press, showBreakdown, tapCard } = await renderApp();
+
+    await tapCard("king");
+    await tapCard("queen");
+    await expectScore("14");
+    await showBreakdown();
+
+    expect(screen.getByLabelText("Remove King from hand")).toBeOnTheScreen();
+
+    await press("remove-card-king");
+
+    expect(screen.queryByTestId("breakdown-card-king")).toBeNull();
+    expect(screen.getByTestId("breakdown-card-queen")).toBeOnTheScreen();
+    expect(screen.getByTestId("breakdown-count")).toHaveTextContent("1 of 7 cards");
+    await waitFor(() => expect(screen.getByTestId("breakdown-total")).toHaveTextContent("6"));
+  });
+
+  it("returns to the grid when the last card is removed", async () => {
+    const { press, showBreakdown, tapCard } = await renderApp();
 
     await tapCard("king");
     await showBreakdown();
+    await press("remove-card-king");
 
-    expect(screen.getByTestId("remove-card-king")).toBeDisabled();
-    expect(screen.getByLabelText("Remove King from hand")).toBeOnTheScreen();
+    expect(screen.queryByTestId("breakdown-total")).toBeNull();
+    expect(screen.getByTestId("card-tile-king")).not.toBeChecked();
+    expect(screen.getByTestId("hand-count")).toHaveTextContent("Tap cards or scan");
+    await expectScore("0");
   });
 
   it("shows placeholders for the figures scoring doesn't report yet", async () => {

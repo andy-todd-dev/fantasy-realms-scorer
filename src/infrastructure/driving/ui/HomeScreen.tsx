@@ -4,13 +4,14 @@ import RotateCcw from "lucide-react-native/icons/rotate-ccw";
 import type { LucideProps } from "lucide-react-native";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
-import { addCardToHand } from "../state/hand-slice";
+import { addCardToHand, clearHand, removeCardFromHand } from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import {
   CardSection,
   CardTile as CardTileData,
   selectCardSections,
   selectCardsStatus,
+  selectHandProgress,
 } from "../state/selectors";
 import { Box } from "./gluestack/box";
 import { Button, ButtonIcon, ButtonText } from "./gluestack/button";
@@ -53,12 +54,21 @@ export function HomeScreen() {
 }
 
 function Header() {
+  const dispatch = useAppDispatch();
+  const { isEmpty } = useAppSelector(selectHandProgress);
+
   return (
     <HStack className="items-center gap-2 bg-background px-4 pb-2 pt-4">
       <Heading size="xl" accessibilityRole="header" className="flex-1">
         Realms Scorer
       </Heading>
-      <Button testID="clear-hand" variant="ghost" size="sm" isDisabled>
+      <Button
+        testID="clear-hand"
+        variant="ghost"
+        size="sm"
+        isDisabled={isEmpty}
+        onPress={() => dispatch(clearHand())}
+      >
         <ButtonIcon as={RotateCcw} className="h-4 w-4 text-subtle-foreground" />
         <ButtonText className="text-subtle-foreground">Clear</ButtonText>
       </Button>
@@ -141,13 +151,11 @@ function CardTile({ card: { id, name, selected } }: { card: CardTileData }) {
     <Pressable
       testID={`card-tile-${id}`}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: selected, disabled: selected }}
-      // Removing a card isn't implemented yet, so a selected tile can't be tapped.
-      disabled={selected}
-      onPress={() => dispatch(addCardToHand(id))}
+      accessibilityState={{ checked: selected }}
+      onPress={() => dispatch(selected ? removeCardFromHand(id) : addCardToHand(id))}
       className={
         selected
-          ? "min-h-12 justify-center rounded-lg border-[1.5px] border-primary bg-accent px-2 py-1.5 data-[disabled=true]:opacity-100"
+          ? "min-h-12 justify-center rounded-lg border-[1.5px] border-primary bg-accent px-2 py-1.5"
           : "min-h-12 justify-center rounded-lg border-[1.5px] border-border bg-muted px-2 py-1.5"
       }
     >

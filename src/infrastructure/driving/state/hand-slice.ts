@@ -17,14 +17,31 @@ export const addCardToHand = createAppAsyncThunk(
     extra.addCardToHand.execute(getState().hand.cardIds, cardId),
 );
 
+export const removeCardFromHand = createAppAsyncThunk(
+  "hand/removeCard",
+  (cardId: CardId, { extra, getState }) =>
+    extra.removeCardFromHand.execute(getState().hand.cardIds, cardId),
+);
+
+export const clearHand = createAppAsyncThunk("hand/clear", (_: void, { extra }) =>
+  extra.clearHand.execute(),
+);
+
 const handSlice = createSlice({
   name: "hand",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(addCardToHand.fulfilled, (_, action) => ({
-      cardIds: action.payload,
-    }));
+    builder
+      .addCase(addCardToHand.fulfilled, (_, action) => ({
+        cardIds: action.payload,
+      }))
+      .addCase(removeCardFromHand.fulfilled, (_, action) => ({
+        cardIds: action.payload,
+      }))
+      .addCase(clearHand.fulfilled, (_, action) => ({
+        cardIds: action.payload,
+      }));
   },
 });
 

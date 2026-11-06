@@ -13,7 +13,7 @@ appId: dev.andytodd.realmsscorer
     id: hand-score
     text: "0"
 
-# Features that aren't implemented yet are disabled, and there's nothing to break down yet
+# With an empty hand there is nothing to clear or break down, and scanning isn't implemented yet
 - assertVisible:
     id: clear-hand
     enabled: false
@@ -42,10 +42,13 @@ appId: dev.andytodd.realmsscorer
     id: hand-score
     text: "8"
 
-# Removing isn't implemented yet, so tapping King again does nothing
-- assertVisible:
+# Tapping King again removes it, then a third tap adds it back
+- tapOn:
     id: card-tile-king
-    enabled: false
+- assertVisible: "Tap cards or scan"
+- assertVisible:
+    id: hand-score
+    text: "0"
 - tapOn:
     id: card-tile-king
 - assertVisible: "1 of 7 cards"
@@ -66,13 +69,37 @@ appId: dev.andytodd.realmsscorer
     id: breakdown-card-queen
     below:
       id: breakdown-card-king
-- assertVisible:
-    id: remove-card-king
-    enabled: false
 
-# Back returns to the grid, where it was left, with the hand intact
+# Removing King on the breakdown updates it in place and rescores
+- tapOn:
+    id: remove-card-king
+- assertNotVisible:
+    id: breakdown-card-king
+- assertVisible:
+    id: breakdown-card-queen
+- assertVisible:
+    id: breakdown-total
+    text: "6"
+
+# Back returns to the grid, where it was left, with the remaining hand intact
 - tapOn:
     id: back-to-cards
 - assertVisible:
     id: card-tile-king
-- assertVisible: "2 of 7 cards"
+- assertVisible: "1 of 7 cards"
+
+# The header hid when the grid scrolled down to the Leaders, and scrolling up brings it back.
+# Clear empties the hand for the next game, and is disabled once there's nothing to clear
+- scrollUntilVisible:
+    element:
+      id: clear-hand
+    direction: UP
+- tapOn:
+    id: clear-hand
+- assertVisible: "Tap cards or scan"
+- assertVisible:
+    id: hand-score
+    text: "0"
+- assertVisible:
+    id: clear-hand
+    enabled: false

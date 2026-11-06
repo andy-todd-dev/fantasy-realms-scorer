@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { removeCardFromHand } from "./hand-slice";
 
 export type Screen = "home" | "breakdown";
 
@@ -17,6 +18,14 @@ const navigationSlice = createSlice({
     screenOpened(state, action: PayloadAction<Screen>) {
       state.screen = action.payload;
     },
+  },
+  extraReducers: (builder) => {
+    // The breakdown can't be opened with an empty hand, so removing the last card leaves it.
+    builder.addCase(removeCardFromHand.fulfilled, (state, action) => {
+      if (action.payload.length === 0) {
+        state.screen = "home";
+      }
+    });
   },
 });
 
