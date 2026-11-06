@@ -1,8 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { HandScore } from "../../../domain/score";
 import { createAppAsyncThunk } from "./create-app-async-thunk";
 
 type ScoreState = {
-  value: number | null;
+  value: HandScore | null;
   latestRequestId: string | null;
 };
 
@@ -26,11 +27,12 @@ const scoreSlice = createSlice({
       .addCase(scoreHand.pending, (state, action) => {
         state.latestRequestId = action.meta.requestId;
       })
-      .addCase(scoreHand.fulfilled, (state, action) => {
-        if (action.meta.requestId === state.latestRequestId) {
-          state.value = action.payload;
-        }
-      })
+      // Returns a new state, as an Immer draft can't hold the score's readonly arrays.
+      .addCase(scoreHand.fulfilled, (state, action) =>
+        action.meta.requestId === state.latestRequestId
+          ? { ...state, value: action.payload }
+          : state,
+      )
       .addCase(scoreHand.rejected, (state, action) => {
         if (action.meta.requestId === state.latestRequestId) {
           state.value = null;

@@ -6,7 +6,8 @@ import { removeCardFromHand } from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { screenOpened } from "../state/navigation-slice";
 import {
-  selectHandCards,
+  BreakdownRow,
+  selectBreakdown,
   selectHandProgress,
   selectScore,
 } from "../state/selectors";
@@ -25,14 +26,94 @@ import { NO_VALUE, SUITS } from "./theme";
 // NativeWind has no class for this on native, so it has to be a style.
 const TABULAR_NUMBERS = { fontVariant: ["tabular-nums" as const] };
 
-// Scoring only reports a total so far, so these figures are placeholders.
-const STATS = ["Base", "Bonuses", "Penalties"];
+// One line under a card's name, such as its base strength or bonus points.
+function FigureLine({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName: string;
+}) {
+  return (
+    <HStack className="justify-between gap-3 pr-13.5 pl-5">
+      <Text size="sm" className="text-subtle-foreground">
+        {label}
+      </Text>
+      <Text size="sm" className={valueClassName} style={TABULAR_NUMBERS}>
+        {value}
+      </Text>
+    </HStack>
+  );
+}
+
+function CardFigures({ row }: { row: BreakdownRow }) {
+  const { blanked, figures } = row;
+
+  if (blanked) {
+    return (
+      <Text size="sm" className="pr-13.5 pl-5 text-muted-foreground">
+        Blanked: scores 0
+      </Text>
+    );
+  }
+
+  if (!figures) {
+    return null;
+  }
+
+  return (
+    <>
+      <FigureLine
+        label="Base strength"
+        value={figures.base}
+        valueClassName="text-subtle-foreground"
+      />
+      {figures.bonus && (
+        <FigureLine
+          label="Bonuses"
+          value={figures.bonus}
+          valueClassName="text-success"
+        />
+      )}
+      {figures.penalty && (
+        <FigureLine
+          label="Penalties"
+          value={figures.penalty}
+          valueClassName="text-destructive"
+        />
+      )}
+    </>
+  );
+}
 
 export function BreakdownScreen() {
   const dispatch = useAppDispatch();
-  const cards = useAppSelector(selectHandCards);
+  const { stats, rows, sum, blanked } = useAppSelector(selectBreakdown);
   const { isComplete, reviewLabel } = useAppSelector(selectHandProgress);
   const score = useAppSelector(selectScore) ?? NO_VALUE;
+  const tiles = [
+    {
+      testID: "breakdown-base",
+      label: "Base",
+      value: stats?.base ?? NO_VALUE,
+      className: "text-foreground",
+    },
+    {
+      testID: "breakdown-bonus",
+      label: "Bonuses",
+      value: stats?.bonus ?? NO_VALUE,
+      className: "text-success",
+    },
+    {
+      testID: "breakdown-penalty",
+      label: "Penalties",
+      value: stats?.penalty ?? NO_VALUE,
+      className:
+        stats && stats.penalty !== "0" ? "text-destructive" : "text-foreground",
+    },
+  ];
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener(
@@ -78,13 +159,19 @@ export function BreakdownScreen() {
 
       {/* Padding rather than gap, so that three tiles fill the row exactly. */}
       <HStack className="mx-3 mt-3">
-        {STATS.map((label) => (
+        {tiles.map(({ testID, label, value, className }) => (
           <Box key={label} className="w-1/3 p-1">
             <Card className="gap-0.5 rounded-xl border-0 px-3 py-2.5">
               <Text size="xs" className="text-muted-foreground">
                 {label}
               </Text>
-              <Text className="font-body-semibold text-xl">{NO_VALUE}</Text>
+              <Text
+                testID={testID}
+                className={`font-body-semibold text-xl ${className}`}
+                style={TABULAR_NUMBERS}
+              >
+                {value}
+              </Text>
             </Card>
           </Box>
         ))}
@@ -94,43 +181,53 @@ export function BreakdownScreen() {
         className="mt-2.5 flex-1"
         contentContainerClassName="gap-2 px-4 pb-3"
       >
-        {cards.map((card) => (
-          <HStack
-            key={card.id}
-            testID={`breakdown-card-${card.id}`}
-            className="items-center gap-2.5 rounded-2xl bg-muted py-1 pr-1 pl-3.5"
+        {rows.map((row) => (
+          <VStack
+            key={row.id}
+            testID={`breakdown-card-${row.id}`}
+            className="gap-1.5 rounded-2xl bg-muted pt-1 pr-1 pb-3 pl-3.5"
           >
-            <SuitDot suit={card.suit} />
-            <Text className="flex-1 font-body-semibold">
-              {card.name}{" "}
-              <Text size="xs" className="text-muted-foreground">
-                {SUITS[card.suit].label}
+            <HStack className="items-center gap-2.5">
+              <SuitDot suit={row.suit} />
+              <Text className="flex-1 font-body-semibold">
+                {row.name}{" "}
+                <Text size="xs" className="text-muted-foreground">
+                  {SUITS[row.suit].label}
+                </Text>
               </Text>
-            </Text>
-            <Text
-              size="lg"
-              className="font-body-bold text-primary"
-              style={TABULAR_NUMBERS}
-            >
-              {NO_VALUE}
-            </Text>
-            <Button
-              testID={`remove-card-${card.id}`}
-              accessibilityLabel={`Remove ${card.name} from hand`}
-              variant="ghost"
-              size="icon"
-              onPress={() => dispatch(removeCardFromHand(card.id))}
-            >
-              <ButtonIcon as={X} className="h-4.5 w-4.5 text-icon" />
-            </Button>
-          </HStack>
+              <Text
+                testID={`card-total-${row.id}`}
+                size="lg"
+                className="font-body-bold text-primary"
+                style={TABULAR_NUMBERS}
+              >
+                {row.figures?.total ?? NO_VALUE}
+              </Text>
+              <Button
+                testID={`remove-card-${row.id}`}
+                accessibilityLabel={`Remove ${row.name} from hand`}
+                variant="ghost"
+                size="icon"
+                onPress={() => dispatch(removeCardFromHand(row.id))}
+              >
+                <ButtonIcon as={X} className="h-4.5 w-4.5 text-icon" />
+              </Button>
+            </HStack>
+            <CardFigures row={row} />
+          </VStack>
         ))}
       </ScrollView>
 
       <Divider />
       <VStack className="gap-1 px-5 pt-3.5 pb-4">
         <HStack className="items-baseline justify-between">
-          <Text className="text-subtle-foreground">Total</Text>
+          <Text
+            testID="breakdown-sum"
+            className="text-subtle-foreground"
+            style={TABULAR_NUMBERS}
+          >
+            {sum ?? NO_VALUE}
+          </Text>
           <Text
             testID="breakdown-total"
             className="font-heading text-4xl text-primary"
@@ -138,8 +235,12 @@ export function BreakdownScreen() {
             {score}
           </Text>
         </HStack>
-        <Text size="xs" className="text-muted-foreground">
-          Blanked cards: {NO_VALUE}
+        <Text
+          testID="breakdown-blanked"
+          size="xs"
+          className="text-muted-foreground"
+        >
+          Blanked cards: {blanked}
         </Text>
       </VStack>
     </Screen>

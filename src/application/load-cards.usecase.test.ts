@@ -24,21 +24,14 @@ const cardWithAbilities: Card = {
 };
 
 describe("LoadCardsUseCase", () => {
-  it("serves the catalog's cards with their display text but no effects", async () => {
+  it("serves only what the UI shows of the catalog's cards", async () => {
     const useCase = new LoadCardsUseCase({
       cardCatalog: { getAll: async () => [plainCard, cardWithAbilities] },
     });
 
     await expect(useCase.execute()).resolves.toStrictEqual([
-      plainCard,
-      {
-        id: "abilities",
-        name: "Abilities",
-        suit: "wizard",
-        baseStrength: 2,
-        bonus: { text: "Bonus text" },
-        penalty: { text: "Penalty text" },
-      },
+      { id: "plain", name: "Plain", suit: "land" },
+      { id: "abilities", name: "Abilities", suit: "wizard" },
     ]);
   });
 

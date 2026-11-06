@@ -53,7 +53,8 @@ appId: dev.andytodd.realmsscorer
     id: card-tile-king
 - assertVisible: "1 of 7 cards"
 
-# Adding Queen puts it after King in the hand, shown on the breakdown
+# Adding Queen scores both, and the breakdown splits the total up through the real wiring.
+# Without an Army, neither bonus applies.
 - tapOn:
     id: card-tile-queen
 - assertVisible: "2 of 7 cards"
@@ -65,6 +66,21 @@ appId: dev.andytodd.realmsscorer
 - assertVisible:
     id: breakdown-total
     text: "14"
+- assertVisible:
+    id: breakdown-base
+    text: "14"
+- assertVisible:
+    id: breakdown-bonus
+    text: "0"
+- assertVisible:
+    id: breakdown-penalty
+    text: "0"
+- assertVisible:
+    id: card-total-king
+    text: "8"
+- assertVisible: "Blanked cards: none"
+
+# Cards are listed highest-scoring first, so King (8) comes above Queen (6)
 - assertVisible:
     id: breakdown-card-queen
     below:

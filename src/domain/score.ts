@@ -1,6 +1,6 @@
-import { Card, CardEffect } from "./card";
+import { Card, CardEffect, CardId } from "./card";
 import { withoutBlankedCards } from "./blanking";
-import { effectsOf, matches, othersIn } from "./card-matching";
+import { matches, othersIn } from "./card-matching";
 import { withPenaltiesCleared } from "./clearing";
 import { conditionHolds } from "./conditions";
 
@@ -80,23 +80,85 @@ function effectPoints(
     : effect.points;
 }
 
+export type CardScore = {
+  readonly cardId: CardId;
+  readonly blanked: boolean;
+  readonly base: number;
+  readonly bonus: number;
+  // Zero or negative.
+  readonly penalty: number;
+  readonly total: number;
+};
+
+export type HandScore = {
+  // In the order the cards were given.
+  readonly cards: readonly CardScore[];
+  readonly base: number;
+  readonly bonus: number;
+  readonly penalty: number;
+  readonly total: number;
+};
+
+// Adds up the points from some effects of the specified card.
+function sumOfEffects(
+  effects: readonly CardEffect[] | undefined,
+  card: Card,
+  others: readonly Card[],
+): number {
+  return (effects ?? []).reduce(
+    (total, effect) => total + effectPoints(effect, card, others),
+    0,
+  );
+}
+
+const BLANKED = { blanked: true, base: 0, bonus: 0, penalty: 0, total: 0 };
+
 /*
-  Calculates the total score for a hand of cards
+  Scores a hand of cards, card by card. Points from a card's bonus count as bonus and points from its penalty count as
+  penalty. A blanked card is listed, scoring nothing.
 */
-export function calculateScore(cards: readonly Card[]): number {
+export function scoreHand(cards: readonly Card[]): HandScore {
   // Clearing takes place before any penalties are applied
   const cleared = withPenaltiesCleared(cards);
 
   // Filter out blanked cards
   const remaining = withoutBlankedCards(cleared);
 
-  // Calculate score based on what is left
-  return remaining.reduce((score, card) => {
-    const others = othersIn(remaining, card);
+  // Score each card based on what is left
+  const cardScores = cards.map(({ id }): CardScore => {
+    const card = remaining.find((other) => other.id === id);
 
-    return effectsOf(card).reduce(
-      (total, effect) => total + effectPoints(effect, card, others),
-      score + card.baseStrength,
-    );
-  }, 0);
+    if (!card) {
+      return { cardId: id, ...BLANKED };
+    }
+
+    const others = othersIn(remaining, card);
+    const bonus = sumOfEffects(card.bonus?.effects, card, others);
+    const penalty = sumOfEffects(card.penalty?.effects, card, others);
+
+    return {
+      cardId: id,
+      blanked: false,
+      base: card.baseStrength,
+      bonus,
+      penalty,
+      total: card.baseStrength + bonus + penalty,
+    };
+  });
+
+  const sum = (key: "base" | "bonus" | "penalty" | "total") =>
+    cardScores.reduce((total, cardScore) => total + cardScore[key], 0);
+
+  return {
+    cards: cardScores,
+    base: sum("base"),
+    bonus: sum("bonus"),
+    penalty: sum("penalty"),
+    total: sum("total"),
+  };
+}
+
+// Calculates the total score for a hand of cards
+export function calculateScore(cards: readonly Card[]): number {
+  return scoreHand(cards).total;
 }

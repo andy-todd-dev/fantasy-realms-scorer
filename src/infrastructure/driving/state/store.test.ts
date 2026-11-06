@@ -2,11 +2,13 @@ import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usec
 import { ClearHandUseCase } from "../../../application/clear-hand.usecase";
 import { RemoveCardFromHandUseCase } from "../../../application/remove-card-from-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
+import type { HandScore } from "../../../domain/score";
 import { loadCards } from "./cards-slice";
 import { addCardToHand, clearHand, removeCardFromHand } from "./hand-slice";
 import { screenOpened } from "./navigation-slice";
 import { scoreHand } from "./score-slice";
 import {
+  selectBreakdown,
   selectCardSections,
   selectCardsStatus,
   selectHandCards,
@@ -35,12 +37,23 @@ const knights: Card = {
   baseStrength: 20,
 };
 
+// A score with only a total, for tests that don't look at the breakdown.
+const totalOnly = (total: number): HandScore => ({
+  cards: [],
+  base: total,
+  bonus: 0,
+  penalty: 0,
+  total,
+});
+
 function createStore(
   loadCardsExecute: () => Promise<Card[]>,
   {
     scoreHandExecute = async () => 0,
   }: {
-    scoreHandExecute?: (cardIds: readonly CardId[]) => Promise<number>;
+    scoreHandExecute?: (
+      cardIds: readonly CardId[],
+    ) => Promise<number | HandScore>;
   } = {},
 ) {
   return createAppStore({
@@ -48,7 +61,12 @@ function createStore(
     clearHand: new ClearHandUseCase(),
     loadCards: { execute: loadCardsExecute },
     removeCardFromHand: new RemoveCardFromHandUseCase(),
-    scoreHand: { execute: scoreHandExecute },
+    scoreHand: {
+      execute: async (cardIds) => {
+        const score = await scoreHandExecute(cardIds);
+        return typeof score === "number" ? totalOnly(score) : score;
+      },
+    },
   });
 }
 
@@ -235,6 +253,133 @@ describe("scoring the hand", () => {
     await store.dispatch(scoreHand());
 
     expect(selectScore(store.getState())).toBeNull();
+  });
+});
+
+describe("breaking down the score", () => {
+  const scored = (
+    cardId: CardId,
+    base: number,
+    bonus = 0,
+    penalty = 0,
+    blanked = false,
+  ) => ({
+    cardId,
+    blanked,
+    base,
+    bonus,
+    penalty,
+    total: base + bonus + penalty,
+  });
+
+  async function createScoredStore(handScore: HandScore) {
+    const store = createStore(async () => [king, queen, knights], {
+      scoreHandExecute: async () => handScore,
+    });
+    await store.dispatch(loadCards());
+    await store.dispatch(addCardToHand("queen"));
+    await store.dispatch(addCardToHand("king"));
+    await store.dispatch(addCardToHand("knights"));
+    await store.dispatch(scoreHand());
+    return store;
+  }
+
+  it("shows the totals and each card's figures, highest-scoring first", async () => {
+    const store = await createScoredStore({
+      cards: [
+        scored("queen", 6, 10, -3),
+        scored("king", 8),
+        scored("knights", 0, 0, 0, true),
+      ],
+      base: 14,
+      bonus: 10,
+      penalty: -3,
+      total: 21,
+    });
+
+    expect(selectBreakdown(store.getState())).toEqual({
+      stats: { base: "14", bonus: "+10", penalty: "\u22123" },
+      rows: [
+        {
+          id: "queen",
+          name: "Queen",
+          suit: "leader",
+          blanked: false,
+          points: 13,
+          figures: { total: "13", base: "6", bonus: "+10", penalty: "\u22123" },
+        },
+        {
+          id: "king",
+          name: "King",
+          suit: "leader",
+          blanked: false,
+          points: 8,
+          figures: { total: "8", base: "8", bonus: null, penalty: null },
+        },
+        {
+          id: "knights",
+          name: "Knights",
+          suit: "army",
+          blanked: true,
+          points: 0,
+          figures: { total: "0", base: "0", bonus: null, penalty: null },
+        },
+      ],
+      sum: "14 + 10 \u2212 3",
+      blanked: "Knights",
+    });
+  });
+
+  it("says none are blanked and shows no penalties as 0", async () => {
+    const store = await createScoredStore({
+      cards: [scored("queen", 6), scored("king", 8), scored("knights", 20)],
+      base: 34,
+      bonus: 0,
+      penalty: 0,
+      total: 34,
+    });
+
+    const { stats, sum, blanked } = selectBreakdown(store.getState());
+
+    expect(stats).toEqual({ base: "34", bonus: "0", penalty: "0" });
+    expect(sum).toBe("34 + 0 \u2212 0");
+    expect(blanked).toBe("none");
+  });
+
+  it("lists cards without figures, in hand order, before there is a score", async () => {
+    const store = await createLoadedStore();
+    await store.dispatch(addCardToHand("queen"));
+    await store.dispatch(addCardToHand("king"));
+
+    const { stats, rows, sum } = selectBreakdown(store.getState());
+
+    expect(stats).toBeNull();
+    expect(sum).toBeNull();
+    expect(rows.map(({ id, figures }) => [id, figures])).toEqual([
+      ["queen", undefined],
+      ["king", undefined],
+    ]);
+  });
+
+  it("lists a card the latest score doesn't cover last, without figures", async () => {
+    const store = await createScoredStore({
+      cards: [scored("queen", 6), scored("king", 8)],
+      base: 14,
+      bonus: 0,
+      penalty: 0,
+      total: 14,
+    });
+
+    expect(
+      selectBreakdown(store.getState()).rows.map(({ id, figures }) => [
+        id,
+        figures?.total,
+      ]),
+    ).toEqual([
+      ["king", "8"],
+      ["queen", "6"],
+      ["knights", undefined],
+    ]);
   });
 });
 
