@@ -1,7 +1,9 @@
 import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usecase";
+import { ClearHandUseCase } from "../../../application/clear-hand.usecase";
+import { RemoveCardFromHandUseCase } from "../../../application/remove-card-from-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
 import { loadCards } from "./cards-slice";
-import { addCardToHand } from "./hand-slice";
+import { addCardToHand, clearHand, removeCardFromHand } from "./hand-slice";
 import { screenOpened } from "./navigation-slice";
 import { scoreHand } from "./score-slice";
 import {
@@ -28,7 +30,9 @@ function createStore(
 ) {
   return createAppStore({
     addCardToHand: new AddCardToHandUseCase(),
+    clearHand: new ClearHandUseCase(),
     loadCards: { execute: loadCardsExecute },
+    removeCardFromHand: new RemoveCardFromHandUseCase(),
     scoreHand: { execute: scoreHandExecute },
   });
 }
@@ -89,6 +93,60 @@ describe("adding a card to the hand", () => {
     await store.dispatch(addCardToHand("queen"));
 
     expect(selectHandCards(store.getState())).toEqual([queen, king]);
+  });
+});
+
+describe("removing a card from the hand", () => {
+  it("removes the card, unselects its tile and keeps the order of the rest", async () => {
+    const store = await createLoadedStore();
+    await store.dispatch(addCardToHand("queen"));
+    await store.dispatch(addCardToHand("king"));
+    await store.dispatch(addCardToHand("knights"));
+
+    await store.dispatch(removeCardFromHand("king"));
+
+    expect(selectHandCards(store.getState())).toEqual([queen, knights]);
+    expect(selectCardSections(store.getState())[1].cards).toEqual([
+      { id: "king", name: "King", selected: false },
+      { id: "queen", name: "Queen", selected: true },
+    ]);
+  });
+
+  it("returns to the home screen when the last card is removed from the breakdown", async () => {
+    const store = await createLoadedStore();
+    await store.dispatch(addCardToHand("king"));
+    store.dispatch(screenOpened("breakdown"));
+
+    await store.dispatch(removeCardFromHand("king"));
+
+    expect(selectHandCards(store.getState())).toEqual([]);
+    expect(selectScreen(store.getState())).toBe("home");
+  });
+
+  it("stays on the breakdown while cards remain", async () => {
+    const store = await createLoadedStore();
+    await store.dispatch(addCardToHand("king"));
+    await store.dispatch(addCardToHand("queen"));
+    store.dispatch(screenOpened("breakdown"));
+
+    await store.dispatch(removeCardFromHand("king"));
+
+    expect(selectScreen(store.getState())).toBe("breakdown");
+  });
+});
+
+describe("clearing the hand", () => {
+  it("empties the hand and unselects every tile", async () => {
+    const store = await createLoadedStore();
+    await store.dispatch(addCardToHand("king"));
+    await store.dispatch(addCardToHand("knights"));
+
+    await store.dispatch(clearHand());
+
+    expect(selectHandCards(store.getState())).toEqual([]);
+    expect(
+      selectCardSections(store.getState()).flatMap((section) => section.cards).some((card) => card.selected),
+    ).toBe(false);
   });
 });
 

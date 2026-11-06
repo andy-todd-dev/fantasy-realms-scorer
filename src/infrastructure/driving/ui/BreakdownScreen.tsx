@@ -2,6 +2,7 @@ import ChevronLeft from "lucide-react-native/icons/chevron-left";
 import X from "lucide-react-native/icons/x";
 import { useEffect } from "react";
 import { BackHandler, ScrollView } from "react-native";
+import { removeCardFromHand } from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { screenOpened } from "../state/navigation-slice";
 import { selectHandCards, selectHandProgress, selectScore } from "../state/selectors";
@@ -96,7 +97,7 @@ export function BreakdownScreen() {
               accessibilityLabel={`Remove ${card.name} from hand`}
               variant="ghost"
               size="icon"
-              isDisabled
+              onPress={() => dispatch(removeCardFromHand(card.id))}
             >
               <ButtonIcon as={X} className="h-4.5 w-4.5 text-icon" />
             </Button>

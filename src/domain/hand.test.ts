@@ -1,4 +1,22 @@
-import { addCardToHand, isCardInHand } from "./hand";
+import { addCardToHand, emptyHand, isCardInHand, removeCardFromHand } from "./hand";
+
+describe("emptyHand", () => {
+  it("has no cards", () => {
+    expect(emptyHand()).toEqual([]);
+  });
+});
+
+describe("removeCardFromHand", () => {
+  it("removes the card, keeping the order of the rest", () => {
+    expect(removeCardFromHand(["king", "queen", "knights"], "queen")).toEqual(["king", "knights"]);
+  });
+
+  it("leaves the hand unchanged when the card isn't in it", () => {
+    const hand = ["king"];
+
+    expect(removeCardFromHand(hand, "queen")).toBe(hand);
+  });
+});
 
 describe("addCardToHand", () => {
   it("adds a card to the end of the hand", () => {
