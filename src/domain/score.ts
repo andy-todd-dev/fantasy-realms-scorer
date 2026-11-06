@@ -49,7 +49,7 @@ function baseStrengthRunPoints(
     }).points;
 }
 
-// Calculates the points contributed by a specific effect of the specified card, based on the other cards in the hand. 
+// Calculates the points contributed by a specific effect of the specified card, based on the other cards in the hand.
 function effectPoints(
   effect: CardEffect,
   card: Card,
@@ -80,12 +80,10 @@ function effectPoints(
     : effect.points;
 }
 
-
 /*
   Calculates the total score for a hand of cards
 */
 export function calculateScore(cards: readonly Card[]): number {
-
   // Clearing takes place before any penalties are applied
   const cleared = withPenaltiesCleared(cards);
 

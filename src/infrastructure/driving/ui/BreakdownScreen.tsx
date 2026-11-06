@@ -5,7 +5,11 @@ import { BackHandler, ScrollView } from "react-native";
 import { removeCardFromHand } from "../state/hand-slice";
 import { useAppDispatch, useAppSelector } from "../state/hooks";
 import { screenOpened } from "../state/navigation-slice";
-import { selectHandCards, selectHandProgress, selectScore } from "../state/selectors";
+import {
+  selectHandCards,
+  selectHandProgress,
+  selectScore,
+} from "../state/selectors";
 import { Box } from "./gluestack/box";
 import { Button, ButtonIcon } from "./gluestack/button";
 import { Card } from "./gluestack/card";
@@ -31,10 +35,13 @@ export function BreakdownScreen() {
   const score = useAppSelector(selectScore) ?? NO_VALUE;
 
   useEffect(() => {
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      dispatch(screenOpened("home"));
-      return true;
-    });
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        dispatch(screenOpened("home"));
+        return true;
+      },
+    );
 
     return () => subscription.remove();
   }, [dispatch]);
@@ -52,7 +59,11 @@ export function BreakdownScreen() {
           <ButtonIcon as={ChevronLeft} className="h-5.5 w-5.5" />
         </Button>
         <VStack className="flex-1">
-          <Heading testID="breakdown-title" size="xl" accessibilityRole="header">
+          <Heading
+            testID="breakdown-title"
+            size="xl"
+            accessibilityRole="header"
+          >
             Your hand: {score}
           </Heading>
           <Text
@@ -70,26 +81,37 @@ export function BreakdownScreen() {
         {STATS.map((label) => (
           <Box key={label} className="w-1/3 p-1">
             <Card className="gap-0.5 rounded-xl border-0 px-3 py-2.5">
-              <Text size="xs" className="text-muted-foreground">{label}</Text>
+              <Text size="xs" className="text-muted-foreground">
+                {label}
+              </Text>
               <Text className="font-body-semibold text-xl">{NO_VALUE}</Text>
             </Card>
           </Box>
         ))}
       </HStack>
 
-      <ScrollView className="mt-2.5 flex-1" contentContainerClassName="gap-2 px-4 pb-3">
+      <ScrollView
+        className="mt-2.5 flex-1"
+        contentContainerClassName="gap-2 px-4 pb-3"
+      >
         {cards.map((card) => (
           <HStack
             key={card.id}
             testID={`breakdown-card-${card.id}`}
-            className="items-center gap-2.5 rounded-2xl bg-muted py-1 pl-3.5 pr-1"
+            className="items-center gap-2.5 rounded-2xl bg-muted py-1 pr-1 pl-3.5"
           >
             <SuitDot suit={card.suit} />
             <Text className="flex-1 font-body-semibold">
               {card.name}{" "}
-              <Text size="xs" className="text-muted-foreground">{SUITS[card.suit].label}</Text>
+              <Text size="xs" className="text-muted-foreground">
+                {SUITS[card.suit].label}
+              </Text>
             </Text>
-            <Text size="lg" className="font-body-bold text-primary" style={TABULAR_NUMBERS}>
+            <Text
+              size="lg"
+              className="font-body-bold text-primary"
+              style={TABULAR_NUMBERS}
+            >
               {NO_VALUE}
             </Text>
             <Button
@@ -106,14 +128,19 @@ export function BreakdownScreen() {
       </ScrollView>
 
       <Divider />
-      <VStack className="gap-1 px-5 pb-4 pt-3.5">
+      <VStack className="gap-1 px-5 pt-3.5 pb-4">
         <HStack className="items-baseline justify-between">
           <Text className="text-subtle-foreground">Total</Text>
-          <Text testID="breakdown-total" className="font-heading text-4xl text-primary">
+          <Text
+            testID="breakdown-total"
+            className="font-heading text-4xl text-primary"
+          >
             {score}
           </Text>
         </HStack>
-        <Text size="xs" className="text-muted-foreground">Blanked cards: {NO_VALUE}</Text>
+        <Text size="xs" className="text-muted-foreground">
+          Blanked cards: {NO_VALUE}
+        </Text>
       </VStack>
     </Screen>
   );

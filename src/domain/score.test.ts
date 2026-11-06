@@ -350,7 +350,9 @@ describe("calculateScore", () => {
         { kind: "blank", targets: [{ suit: "land" }] },
       ]);
 
-      expect(calculateScore([clearsFloods, penalisedFlood, blanksLands])).toBe(9);
+      expect(calculateScore([clearsFloods, penalisedFlood, blanksLands])).toBe(
+        9,
+      );
     });
 
     it("leaves a cleared card's suit and name counting for other cards", () => {
@@ -433,10 +435,10 @@ describe("calculateScore", () => {
   });
 
   describe("clearPenaltySuitWord effects", () => {
-    const withPenalty = (
-      base: Card,
-      effects: readonly CardEffect[],
-    ): Card => ({ ...base, penalty: { text: "", effects } });
+    const withPenalty = (base: Card, effects: readonly CardEffect[]): Card => ({
+      ...base,
+      penalty: { text: "", effects },
+    });
     const subject = (effects: readonly CardEffect[]) =>
       withPenalty(card("subject", "flame", 10), effects);
     const clearer = card("clearer", "wizard", 1, [
@@ -557,7 +559,11 @@ describe("calculateScore", () => {
       expect(
         calculateScore([
           subject([
-            { kind: "points", points: -5, when: { absent: { suit: "leader" } } },
+            {
+              kind: "points",
+              points: -5,
+              when: { absent: { suit: "leader" } },
+            },
           ]),
           clearer,
         ]),
@@ -684,7 +690,11 @@ describe("calculateScore", () => {
 
       it("leaves the word on a card matching no target", () => {
         expect(
-          calculateScore([subject([minusThreePerArmy]), anArmy, limitedClearer]),
+          calculateScore([
+            subject([minusThreePerArmy]),
+            anArmy,
+            limitedClearer,
+          ]),
         ).toBe(18); // (10 - 3) + 10 + 1
       });
 
@@ -776,7 +786,9 @@ describe("calculateScore", () => {
         ...card("weapon-2", "weapon", 40),
         penalty: {
           text: "",
-          effects: [{ kind: "blankSelf", when: { absent: { suit: "wizard" } } }],
+          effects: [
+            { kind: "blankSelf", when: { absent: { suit: "wizard" } } },
+          ],
         },
       };
       const clearsWeapons = card("clearer", "land", 1, [
@@ -865,11 +877,15 @@ describe("calculateScore", () => {
       expect(calculateScore([subject, ...strengths(4, 6, 7)])).toBe(52); // 5 + 4 + 6 + 7 + 30
       expect(calculateScore([subject, ...strengths(3, 4, 6, 7)])).toBe(85); // 5 + 3 + 4 + 6 + 7 + 60
       expect(calculateScore([subject, ...strengths(3, 4, 6, 7, 8)])).toBe(133); // 5 + 3 + 4 + 6 + 7 + 8 + 100
-      expect(calculateScore([subject, ...strengths(2, 3, 4, 6, 7, 8)])).toBe(185); // 5 + 2 + 3 + 4 + 6 + 7 + 8 + 150
+      expect(calculateScore([subject, ...strengths(2, 3, 4, 6, 7, 8)])).toBe(
+        185,
+      ); // 5 + 2 + 3 + 4 + 6 + 7 + 8 + 150
     });
 
     it("pays nothing extra for a run longer than the top tier", () => {
-      expect(calculateScore([subject, ...strengths(1, 2, 3, 4, 6, 7, 8)])).toBe(186); // 5 + 1 + 2 + 3 + 4 + 6 + 7 + 8 + 150
+      expect(calculateScore([subject, ...strengths(1, 2, 3, 4, 6, 7, 8)])).toBe(
+        186,
+      ); // 5 + 1 + 2 + 3 + 4 + 6 + 7 + 8 + 150
     });
 
     it("pays for a run that doesn't include the owner", () => {
@@ -883,7 +899,9 @@ describe("calculateScore", () => {
 
     it("pays only the longest run", () => {
       expect(calculateScore([subject, ...strengths(4, 6, 9, 10, 11)])).toBe(55); // 5 + 4 + 6 + 9 + 10 + 11 + 10, two runs of 3
-      expect(calculateScore([subject, ...strengths(6, 7, 8, 1, 2, 3)])).toBe(62); // 5 + 6 + 7 + 8 + 1 + 2 + 3 + 30, runs of 4 and 3
+      expect(calculateScore([subject, ...strengths(6, 7, 8, 1, 2, 3)])).toBe(
+        62,
+      ); // 5 + 6 + 7 + 8 + 1 + 2 + 3 + 30, runs of 4 and 3
     });
 
     it("doesn't count a card blanked by another card", () => {
@@ -910,7 +928,9 @@ describe("calculateScore", () => {
         ...card("self-blanker", "wizard", 6),
         penalty: {
           text: "",
-          effects: [{ kind: "blankSelf", when: { absent: { suit: "weapon" } } }],
+          effects: [
+            { kind: "blankSelf", when: { absent: { suit: "weapon" } } },
+          ],
         },
       };
       const clearsWizards = card("clearer", "land", 20, [
@@ -952,9 +972,9 @@ describe("calculateScore", () => {
     ]);
 
     it("doesn't blank the excepted card, but blanks the rest of the suit", () => {
-      expect(
-        calculateScore([blanksLandsExceptFirst, aLand, anotherLand]),
-      ).toBe(5); // 1 + 4, land-2 blanked
+      expect(calculateScore([blanksLandsExceptFirst, aLand, anotherLand])).toBe(
+        5,
+      ); // 1 + 4, land-2 blanked
     });
 
     it("still lets a different card blank the excepted card", () => {
@@ -999,11 +1019,18 @@ describe("calculateScore", () => {
         penalty: { text: "", effects: [{ kind: "points", points: -2 }] },
       });
       const clearer = card("clearer", "land", 1, [
-        { kind: "clearPenalty", targets: [{ suit: "flood", except: ["flood-1"] }] },
+        {
+          kind: "clearPenalty",
+          targets: [{ suit: "flood", except: ["flood-1"] }],
+        },
       ]);
 
       expect(
-        calculateScore([clearer, penalisedFlood("flood-1"), penalisedFlood("flood-2")]),
+        calculateScore([
+          clearer,
+          penalisedFlood("flood-1"),
+          penalisedFlood("flood-2"),
+        ]),
       ).toBe(9); // 1 + (5 - 2) + 5
     });
 

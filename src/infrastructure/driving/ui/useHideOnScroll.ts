@@ -26,7 +26,9 @@ export function useHideOnScroll() {
 
     if (!reducedMotion) {
       // Never more than the offset, so the header is fully back by the time the top is reached.
-      hiddenBy.set(Math.max(Math.min(hiddenBy.get() + change, height.get()), 0));
+      hiddenBy.set(
+        Math.max(Math.min(hiddenBy.get() + change, height.get()), 0),
+      );
     }
   });
 

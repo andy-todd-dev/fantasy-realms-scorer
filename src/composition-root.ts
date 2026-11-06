@@ -32,12 +32,19 @@ export function createUseCases(): UseCases {
     addCardToHand: asFunction(() => new AddCardToHandUseCase()).singleton(),
     cardCatalog: asFunction(() => new InMemoryCardCatalog()).singleton(),
     clearHand: asFunction(() => new ClearHandUseCase()).singleton(),
-    loadCards: asFunction((deps: Cradle) => new LoadCardsUseCase(deps)).singleton(),
-    removeCardFromHand: asFunction(() => new RemoveCardFromHandUseCase()).singleton(),
-    scoreHand: asFunction((deps: Cradle) => new ScoreHandUseCase(deps)).singleton(),
+    loadCards: asFunction(
+      (deps: Cradle) => new LoadCardsUseCase(deps),
+    ).singleton(),
+    removeCardFromHand: asFunction(
+      () => new RemoveCardFromHandUseCase(),
+    ).singleton(),
+    scoreHand: asFunction(
+      (deps: Cradle) => new ScoreHandUseCase(deps),
+    ).singleton(),
   });
 
-  const { addCardToHand, clearHand, loadCards, removeCardFromHand, scoreHand } = container.cradle;
+  const { addCardToHand, clearHand, loadCards, removeCardFromHand, scoreHand } =
+    container.cradle;
 
   return { addCardToHand, clearHand, loadCards, removeCardFromHand, scoreHand };
 }

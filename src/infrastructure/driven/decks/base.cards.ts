@@ -266,7 +266,10 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
     baseStrength: 5,
     bonus: {
       text: '+10 for each Land. Clears the word "Army" from all penalties.',
-      effects: [points(10, { per: suit("land") }), clearPenaltySuitWord("army")],
+      effects: [
+        points(10, { per: suit("land") }),
+        clearPenaltySuitWord("army"),
+      ],
     },
   },
   "dwarvish-infantry": {
@@ -285,7 +288,9 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
     bonus: {
       text: "+50 with both Smoke and Wildfire. Clears the penalty on all Floods.",
       effects: [
-        points(50, { when: allOf(present(card("smoke")), present(card("wildfire"))) }),
+        points(50, {
+          when: allOf(present(card("smoke")), present(card("wildfire"))),
+        }),
         clearPenalty(suit("flood")),
       ],
     },
@@ -298,7 +303,10 @@ export const BASE_DECK_CARDS: Record<BaseCardId, CardDefinition> = {
       text: "+25 with Dwarvish Infantry or Dragon. Clears the penalty on all Weather.",
       effects: [
         points(25, {
-          when: anyOf(present(card("dwarvish-infantry")), present(card("dragon"))),
+          when: anyOf(
+            present(card("dwarvish-infantry")),
+            present(card("dragon")),
+          ),
         }),
         clearPenalty(suit("weather")),
       ],

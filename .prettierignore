@@ -1,0 +1,12 @@
+android/
+ios/
+dist/
+web-build/
+.expo/
+package-lock.json
+
+# Copied from Gluestack and re-copied on updates, so left in the form they come in.
+src/infrastructure/driving/ui/gluestack/
+
+# Exported design files.
+design/mockups/*.html

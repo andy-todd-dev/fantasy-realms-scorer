@@ -12,6 +12,8 @@ npx expo prebuild -p android --clean # regenerate android/
 npx expo install <package>           # add a dependency
 npm run ui:add -- <component>        # add a Gluestack component
 npx expo-doctor                      # diagnose project issues
+npm run format                       # format everything with Prettier
+npm run format:check                 # check formatting without writing
 npm run lint                         # run ESLint, including layer boundary rules
 npm test                             # run Jest tests
 npm run test:e2e                     # run Maestro flows on the installed debug build, starting Metro if needed
@@ -23,6 +25,10 @@ npm run test:e2e:build:release       # build and install the release app, then r
 Do not install the app on the phone or run Maestro flows unless explicitly told to.
 
 Component tests use React Native Testing Library: render the real components and store with fake use cases, as in `App.test.tsx`. Use them for UI behaviour, including failure and in-flight states, and keep Maestro for flows through the real wiring. Jest doesn't run the CSS, so passing tests say nothing about styling: check that on a device.
+
+## Formatting
+
+Prettier formats files on save in VS Code, after each Claude Code edit (a hook in `.claude/settings.json`), and on commit (husky and lint-staged), so don't format by hand. It also sorts Tailwind classes. `.prettierignore` leaves out the copied Gluestack components and the design mockups.
 
 ## Styling
 
@@ -40,6 +46,7 @@ Gluestack v5 components, styled with NativeWind v5 and Tailwind v4. `design/mock
 Gluestack components are source files copied into `ui/gluestack/`:
 
 - Add them with `npm run ui:add`, not the Gluestack CLI directly. On every install the CLI sets `legacy-peer-deps` in `.npmrc`, which hides peer conflicts and removes peers that Jest needs, so the script undoes it.
+- `ui/gluestack/` is in `.prettierignore`, so these files keep their upstream formatting and re-adding a component only shows real changes.
 - Re-adding a component overwrites it. Prefer tokens and `className` at the call site, and keep other edits to these files small. Most have local edits to reapply: `button`, `heading`, `card` and `gluestack-ui-provider` for the design, and any file with web-only classes, which come with new components too. Remove `index.web.tsx` files, `isWeb` branches, `web:` classes and anything else Metro reports as dropped.
 - Components that need `@legendapp/motion` fail to install while NativeWind is a prerelease, as `5.0.0-rc.1` doesn't satisfy its `>=4.0.0` peer range. Use a narrow `overrides` entry for that package rather than `legacy-peer-deps`.
 - With `android/` present, the CLI can't detect an Expo project and `-y` makes it choose `library`, which replaces NativeWind v5 with v4. Don't pass `-y` to `init`, and choose Expo when asked.

@@ -10,9 +10,9 @@ const DEFAULT_DECK = BASE_DECK;
 
 export const DECKS: readonly Deck[] = [BASE_DECK];
 
-export const CARDS: readonly CatalogCard[] = Object.entries(BASE_DECK_CARDS).map(
-  ([id, definition]) => ({ deckId: BASE_DECK.id, id, ...definition }),
-);
+export const CARDS: readonly CatalogCard[] = Object.entries(
+  BASE_DECK_CARDS,
+).map(([id, definition]) => ({ deckId: BASE_DECK.id, id, ...definition }));
 
 export class InMemoryCardCatalog {
   private readonly cards: readonly Card[];

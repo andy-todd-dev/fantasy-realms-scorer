@@ -36,7 +36,14 @@ function blanksItself(
   return anyTrue(
     effectsOf(card).flatMap((effect) =>
       effect.kind === "blankSelf"
-        ? [conditionTruth(effect.when, card, othersIn(settled, card), othersIn(unsettled, card))]
+        ? [
+            conditionTruth(
+              effect.when,
+              card,
+              othersIn(settled, card),
+              othersIn(unsettled, card),
+            ),
+          ]
         : [],
     ),
   );
@@ -72,7 +79,9 @@ function settleInPlay(
   settled: readonly Card[],
   unsettled: readonly Card[],
 ): readonly Card[] {
-  const inPlay = unsettled.filter((card) => blanking(card, settled, unsettled) === false);
+  const inPlay = unsettled.filter(
+    (card) => blanking(card, settled, unsettled) === false,
+  );
   const stillUnsettled = unsettled.filter(
     (card) => blanking(card, settled, unsettled) === undefined,
   );

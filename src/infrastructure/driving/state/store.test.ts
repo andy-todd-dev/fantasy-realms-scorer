@@ -16,9 +16,24 @@ import {
 } from "./selectors";
 import { createAppStore } from "./store";
 
-const king: Card = { id: "king", name: "King", suit: "leader", baseStrength: 8 };
-const queen: Card = { id: "queen", name: "Queen", suit: "leader", baseStrength: 6 };
-const knights: Card = { id: "knights", name: "Knights", suit: "army", baseStrength: 20 };
+const king: Card = {
+  id: "king",
+  name: "King",
+  suit: "leader",
+  baseStrength: 8,
+};
+const queen: Card = {
+  id: "queen",
+  name: "Queen",
+  suit: "leader",
+  baseStrength: 6,
+};
+const knights: Card = {
+  id: "knights",
+  name: "Knights",
+  suit: "army",
+  baseStrength: 20,
+};
 
 function createStore(
   loadCardsExecute: () => Promise<Card[]>,
@@ -145,7 +160,9 @@ describe("clearing the hand", () => {
 
     expect(selectHandCards(store.getState())).toEqual([]);
     expect(
-      selectCardSections(store.getState()).flatMap((section) => section.cards).some((card) => card.selected),
+      selectCardSections(store.getState())
+        .flatMap((section) => section.cards)
+        .some((card) => card.selected),
     ).toBe(false);
   });
 });
@@ -309,26 +326,32 @@ describe("tracking progress towards a full hand", () => {
 
 describe("ordering the card sections", () => {
   it("lists suits alphabetically, not in the catalogue's order", async () => {
-    const mirage: Card = { id: "mirage", name: "Mirage", suit: "wild", baseStrength: 0 };
-    const collector: Card = { id: "collector", name: "Collector", suit: "wizard", baseStrength: 7 };
+    const mirage: Card = {
+      id: "mirage",
+      name: "Mirage",
+      suit: "wild",
+      baseStrength: 0,
+    };
+    const collector: Card = {
+      id: "collector",
+      name: "Collector",
+      suit: "wizard",
+      baseStrength: 7,
+    };
     const store = createStore(async () => [collector, mirage, king, knights]);
     await store.dispatch(loadCards());
 
-    expect(selectCardSections(store.getState()).map(({ suit }) => suit)).toEqual([
-      "army",
-      "leader",
-      "wild",
-      "wizard",
-    ]);
+    expect(
+      selectCardSections(store.getState()).map(({ suit }) => suit),
+    ).toEqual(["army", "leader", "wild", "wizard"]);
   });
 
   it("lists cards alphabetically within a suit, not in the catalogue's order", async () => {
     const store = createStore(async () => [queen, king]);
     await store.dispatch(loadCards());
 
-    expect(selectCardSections(store.getState())[0].cards.map(({ name }) => name)).toEqual([
-      "King",
-      "Queen",
-    ]);
+    expect(
+      selectCardSections(store.getState())[0].cards.map(({ name }) => name),
+    ).toEqual(["King", "Queen"]);
   });
 });

@@ -44,9 +44,16 @@ export const selectHandProgress = createSelector(
       isEmpty: count === 0,
       isComplete,
       // One entry per slot, true when filled. A hand over the target gets extra slots.
-      pips: Array.from({ length: Math.max(HAND_SIZE, count) }, (_, index) => index < count),
+      pips: Array.from(
+        { length: Math.max(HAND_SIZE, count) },
+        (_, index) => index < count,
+      ),
       countLabel:
-        count === 0 ? "Tap cards or scan" : isComplete ? `${countText} ✓` : countText,
+        count === 0
+          ? "Tap cards or scan"
+          : isComplete
+            ? `${countText} ✓`
+            : countText,
       reviewLabel: isComplete ? `${countText} · complete` : countText,
       pipsAccessibilityLabel: `${countText}. Show breakdown`,
     };

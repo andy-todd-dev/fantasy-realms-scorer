@@ -10,14 +10,15 @@ These notes cover the intent behind the mockups in this folder: the things that 
 
 ## Screens and flow
 
-| File | Screen | Purpose |
-|---|---|---|
-| `Main.dc.html` | Home: pick your hand | The app opens here. Tap grid of every card, the hand so far, and a live score |
-| `Scan.dc.html` | Scan your hand | Camera view; one photo captures the whole hand |
-| `ScanReview.dc.html` | Check your cards | Confirm uncertain matches from the scan, then return home with the cards selected |
-| `Breakdown.dc.html` | Hand & score breakdown | Every card in the hand and how the total was calculated; also where the hand is reviewed and cards removed |
+| File                 | Screen                 | Purpose                                                                                                    |
+| -------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Main.dc.html`       | Home: pick your hand   | The app opens here. Tap grid of every card, the hand so far, and a live score                              |
+| `Scan.dc.html`       | Scan your hand         | Camera view; one photo captures the whole hand                                                             |
+| `ScanReview.dc.html` | Check your cards       | Confirm uncertain matches from the scan, then return home with the cards selected                          |
+| `Breakdown.dc.html`  | Hand & score breakdown | Every card in the hand and how the total was calculated; also where the hand is reviewed and cards removed |
 
 Flows:
+
 - **Manual:** Home (tap cards; score updates live) → "Show breakdown" → Breakdown.
 - **Scan:** Home → Scan → Check → Home (cards already selected, score shown) → Breakdown if wanted.
 
@@ -33,6 +34,7 @@ Entering a hand card by card was too slow, so the design is built around the fac
 4. **Edit, don't re-enter.** The hand persists, so trying a "what if" swap is a couple of taps. "Clear" empties the hand for the next game.
 
 ### Home screen layout
+
 - **Compact header:** app name, "Clear" (text button) and "Scan" (gold pill). No screen title, to leave room for the grid.
 - **The header hides on scroll:** it slides away as the grid scrolls down and comes back as soon as the player scrolls up (or reaches the top), giving the grid nearly the full screen height while picking. The mockup can't show this; implement it with an animated header driven by scroll direction (e.g. Reanimated's `useAnimatedScrollHandler`). The bottom bar never hides.
 - **Grid** fills all the space between the header and the bottom bar and scrolls on its own.
@@ -45,14 +47,17 @@ Entering a hand card by card was too slow, so the design is built around the fac
 ## Behaviour to implement
 
 ### Hand size
+
 - The target is 7, but the picker must not block an 8th card: the Necromancer lets a player end with 8. Adjust the counter wording when a hand is legitimately larger.
 - A card can be in the hand only once.
 
 ### Card picker order
+
 - Suits are listed in alphabetical order (Army, Artifact, Beast, Flame, Flood, Land, Leader, Weapon, Weather, Wild, Wizard), and cards are alphabetical within each suit. Players find cards by suit colour first, then scan down a predictable list.
 - Sort in code with `localeCompare` rather than relying on data order, so cards added later land in the right place. Wild sits in its alphabetical slot, not at the end.
 
 ### Scanning and matching
+
 - Card recognition reads card names and matches them against the fixed card list. Use fuzzy matching (edit distance or similar), since OCR will misread letters.
 - Each match has a confidence. Confident matches go straight into the "Matched" list; low-confidence ones go into "Not sure about this card" with the top 2–3 candidates, best first and preselected.
 - "None of these" returns to the home grid to choose the right card by hand. Confirming ("Looks right: add to hand") also returns home, with the scanned cards selected and the score showing. Decide whether a scan replaces the current hand or adds to it; replacing is the likelier intent, but say so if cards were already selected.
@@ -61,6 +66,7 @@ Entering a hand card by card was too slow, so the design is built around the fac
 - The same name-matching logic can later support voice entry.
 
 ### Scoring and the breakdown
+
 - The live score on the home screen and the breakdown must always agree: the breakdown splits the same total into **Base**, **Bonuses** and **Penalties**. Recalculate on every change to the hand.
 - The breakdown lists each card with its base strength, then each bonus or penalty that applied **and the reason in plain words, naming the other cards involved** (e.g. "+10 × 2 Lands (Bell Tower, Mountain)"). The aim is that a player can check the maths against the physical cards.
 - If a card has a bonus that didn't trigger, show a short note saying what was missing (e.g. "Bonus needs Smoke and Wildfire, not in hand"). This helps players learn the cards.
@@ -96,52 +102,52 @@ Values are space-separated RGB channels, set per scheme and exposed as utilities
 
 **gluestack's semantic tokens:**
 
-| Token | Hex | RGB | Used for |
-|---|---|---|---|
-| `background` | `#141821` | `20 24 33` | Screen background |
-| `foreground` | `#EDE9E0` | `237 233 224` | Primary text |
-| `card` | `#1E2430` | `30 36 48` | Stat tiles on the breakdown |
-| `card-foreground` | `#EDE9E0` | `237 233 224` | Text on cards |
-| `popover` | `#1E2430` | `30 36 48` | Sheets / menus, if added |
-| `popover-foreground` | `#EDE9E0` | `237 233 224` | Text on popovers |
-| `primary` | `#E3B75B` | `227 183 91` | Gold accent: total score, primary buttons, selection borders |
-| `primary-foreground` | `#1A1408` | `26 20 8` | Text and icons on gold buttons |
-| `secondary` | `#2A3242` | `42 50 66` | Secondary buttons, if needed |
-| `secondary-foreground` | `#EDE9E0` | `237 233 224` | Text on secondary buttons |
-| `muted` | `#1A1F2A` | `26 31 42` | List rows, grid tiles, home bottom bar |
-| `muted-foreground` | `#A9B0BD` | `169 176 189` | Captions, suit names, counters |
-| `accent` | `#2E2A1E` | `46 42 30` | Selected tile / selected radio background |
-| `accent-foreground` | `#F3E4BE` | `243 228 190` | Text on a selected background |
-| `destructive` | `#FF8A8A` | `255 138 138` | Penalties (always with a minus sign) |
-| `border` | `#2C3343` | `44 51 67` | Tile and card borders, dividers |
-| `input` | `#3A4252` | `58 66 82` | Outline buttons, input borders |
-| `ring` | `#E3B75B` | `227 183 91` | Focus ring |
+| Token                  | Hex       | RGB           | Used for                                                     |
+| ---------------------- | --------- | ------------- | ------------------------------------------------------------ |
+| `background`           | `#141821` | `20 24 33`    | Screen background                                            |
+| `foreground`           | `#EDE9E0` | `237 233 224` | Primary text                                                 |
+| `card`                 | `#1E2430` | `30 36 48`    | Stat tiles on the breakdown                                  |
+| `card-foreground`      | `#EDE9E0` | `237 233 224` | Text on cards                                                |
+| `popover`              | `#1E2430` | `30 36 48`    | Sheets / menus, if added                                     |
+| `popover-foreground`   | `#EDE9E0` | `237 233 224` | Text on popovers                                             |
+| `primary`              | `#E3B75B` | `227 183 91`  | Gold accent: total score, primary buttons, selection borders |
+| `primary-foreground`   | `#1A1408` | `26 20 8`     | Text and icons on gold buttons                               |
+| `secondary`            | `#2A3242` | `42 50 66`    | Secondary buttons, if needed                                 |
+| `secondary-foreground` | `#EDE9E0` | `237 233 224` | Text on secondary buttons                                    |
+| `muted`                | `#1A1F2A` | `26 31 42`    | List rows, grid tiles, home bottom bar                       |
+| `muted-foreground`     | `#A9B0BD` | `169 176 189` | Captions, suit names, counters                               |
+| `accent`               | `#2E2A1E` | `46 42 30`    | Selected tile / selected radio background                    |
+| `accent-foreground`    | `#F3E4BE` | `243 228 190` | Text on a selected background                                |
+| `destructive`          | `#FF8A8A` | `255 138 138` | Penalties (always with a minus sign)                         |
+| `border`               | `#2C3343` | `44 51 67`    | Tile and card borders, dividers                              |
+| `input`                | `#3A4252` | `58 66 82`    | Outline buttons, input borders                               |
+| `ring`                 | `#E3B75B` | `227 183 91`  | Focus ring                                                   |
 
 **App-specific tokens** (add alongside the semantic ones, same format):
 
-| Token | Hex | RGB | Used for |
-|---|---|---|---|
-| `primary-pressed` | `#F0CD82` | `240 205 130` | Pressed / hover state of primary |
-| `subtle-foreground` | `#C9CED8` | `201 206 216` | Secondary text: explanations, sub-totals |
-| `icon` | `#8D95A3` | `141 149 163` | Decorative icons only (too low-contrast for text) |
-| `border-strong` | `#4A5262` | `74 82 98` | Unselected radio rings, empty progress pips (dashed) |
-| `warning` | `#F08A5D` | `240 138 93` | Warning border, uncertain scan outlines |
-| `warning-muted` | `#2A1F1A` | `42 31 26` | "Not sure about this card" panel background |
-| `warning-foreground` | `#F8B596` | `248 181 150` | Warning text |
-| `success` | `#9DD49A` | `157 212 154` | Bonuses, matched-card ticks |
-| `camera` | `#0B0D12` | `11 13 18` | Camera screen background |
-| `suit-army` | `#000000` | `0 0 0` | Black |
-| `suit-artifact` | `#E67E22` | `230 126 34` | Orange |
-| `suit-beast` | `#1E7B3A` | `30 123 58` | Green |
-| `suit-flame` | `#D93636` | `217 54 54` | Red |
-| `suit-flood` | `#1F4FA8` | `31 79 168` | Dark blue |
-| `suit-land` | `#8B5A2B` | `139 90 43` | Brown |
-| `suit-leader` | `#8E44C9` | `142 68 201` | Purple |
-| `suit-weapon` | `#B4B8BE` | `180 184 190` | Grey |
-| `suit-weather` | `#7CC4EE` | `124 196 238` | Light blue |
-| `suit-wild` | `#E6E8EA` | `230 232 234` | White |
-| `suit-wizard` | `#EE7FB8` | `238 127 184` | Pink |
-| `suit-dot-ring` | `#8D95A3` | `141 149 163` | 1px ring round every suit dot |
+| Token                | Hex       | RGB           | Used for                                             |
+| -------------------- | --------- | ------------- | ---------------------------------------------------- |
+| `primary-pressed`    | `#F0CD82` | `240 205 130` | Pressed / hover state of primary                     |
+| `subtle-foreground`  | `#C9CED8` | `201 206 216` | Secondary text: explanations, sub-totals             |
+| `icon`               | `#8D95A3` | `141 149 163` | Decorative icons only (too low-contrast for text)    |
+| `border-strong`      | `#4A5262` | `74 82 98`    | Unselected radio rings, empty progress pips (dashed) |
+| `warning`            | `#F08A5D` | `240 138 93`  | Warning border, uncertain scan outlines              |
+| `warning-muted`      | `#2A1F1A` | `42 31 26`    | "Not sure about this card" panel background          |
+| `warning-foreground` | `#F8B596` | `248 181 150` | Warning text                                         |
+| `success`            | `#9DD49A` | `157 212 154` | Bonuses, matched-card ticks                          |
+| `camera`             | `#0B0D12` | `11 13 18`    | Camera screen background                             |
+| `suit-army`          | `#000000` | `0 0 0`       | Black                                                |
+| `suit-artifact`      | `#E67E22` | `230 126 34`  | Orange                                               |
+| `suit-beast`         | `#1E7B3A` | `30 123 58`   | Green                                                |
+| `suit-flame`         | `#D93636` | `217 54 54`   | Red                                                  |
+| `suit-flood`         | `#1F4FA8` | `31 79 168`   | Dark blue                                            |
+| `suit-land`          | `#8B5A2B` | `139 90 43`   | Brown                                                |
+| `suit-leader`        | `#8E44C9` | `142 68 201`  | Purple                                               |
+| `suit-weapon`        | `#B4B8BE` | `180 184 190` | Grey                                                 |
+| `suit-weather`       | `#7CC4EE` | `124 196 238` | Light blue                                           |
+| `suit-wild`          | `#E6E8EA` | `230 232 234` | White                                                |
+| `suit-wizard`        | `#EE7FB8` | `238 127 184` | Pink                                                 |
+| `suit-dot-ring`      | `#8D95A3` | `141 149 163` | 1px ring round every suit dot                        |
 
 Sketch of the additions in `global.css` (match the exact variable naming the CLI generated for the semantic tokens):
 
@@ -173,16 +179,16 @@ The suit colours match the printed cards and live in `global.css` with the other
 
 ### Type, spacing and radius scales
 
-| Role | Class | Size |
-|---|---|---|
-| Breakdown total | `font-heading text-4xl` | 36 |
-| Live score (home bottom bar) | `font-heading text-3xl` | 30 |
-| Screen titles | `font-heading text-2xl` | 24 |
-| Camera title, stat-tile numbers | `text-xl` | 20 |
-| Section headings, card points | `text-lg` | 18 |
-| Body, buttons, list names | `text-base` | 16 |
-| Secondary text, tiles | `text-sm` | 14 |
-| Captions, suit headings (uppercase, `tracking-widest`) | `text-xs` | 12 |
+| Role                                                   | Class                   | Size |
+| ------------------------------------------------------ | ----------------------- | ---- |
+| Breakdown total                                        | `font-heading text-4xl` | 36   |
+| Live score (home bottom bar)                           | `font-heading text-3xl` | 30   |
+| Screen titles                                          | `font-heading text-2xl` | 24   |
+| Camera title, stat-tile numbers                        | `text-xl`               | 20   |
+| Section headings, card points                          | `text-lg`               | 18   |
+| Body, buttons, list names                              | `text-base`             | 16   |
+| Secondary text, tiles                                  | `text-sm`               | 14   |
+| Captions, suit headings (uppercase, `tracking-widest`) | `text-xs`               | 12   |
 
 - **Fonts:** `heading` = Marcellus (regular only, so never bold a heading), `body` = Inter. In React Native each Inter weight is its own font family (`Inter_400Regular`, `Inter_500Medium`, `Inter_600SemiBold`, `Inter_700Bold` from `@expo-google-fonts/inter`), so `font-medium` alone won't switch weight. The `--font-*` entries in `@theme inline` above create `font-heading`, `font-body`, `font-body-medium`, `font-body-semibold` and `font-body-bold`; use those instead of `font-*` weight classes. The family names must match the ones `expo-font` registers (listed in `app.json`).
 - **Spacing:** 4px grid. Screen side padding `px-4`, gaps between list rows `gap-1`, between tiles `gap-1.5`, between sections `gap-3.5` / `gap-4`.
@@ -191,22 +197,22 @@ The suit colours match the printed cards and live in `global.css` with the other
 
 ### Component mapping
 
-| Mockup element | gluestack-ui component |
-|---|---|
-| Screen layouts, rows | `Box`, `VStack`, `HStack` |
-| Titles / body text | `Heading`, `Text` |
-| "Show breakdown", "Looks right: add to hand" | `Button`, primary / solid style, large size, + `ButtonText` (+ `ButtonIcon`) |
-| "Scan" (home header) | `Button`, primary / solid style, small size, fully rounded |
-| "Clear" (home header) | `Button`, link / ghost style |
-| Progress pips | `Pressable` (opens the breakdown) wrapping an `HStack` of `Box` circles; give the `Pressable` an `accessibilityLabel` such as "5 of 7 cards. Show breakdown" |
-| Breakdown row remove | `Button`, link / ghost style, icon only, `accessibilityLabel="Remove <card> from hand"` |
-| Back, close, flash, remove-card | `Button`, link / ghost style with `ButtonIcon` only, plus `accessibilityLabel` |
-| Stat tiles, breakdown rows, "not sure" panel | `Card` |
-| Grid tiles | `Pressable` with `accessibilityRole="checkbox"` and `accessibilityState={{ checked }}` |
-| Scan candidates | `RadioGroup` → `Radio`, `RadioIndicator`, `RadioIcon`, `RadioLabel` |
-| Dividers above bottom bars | `Divider` |
-| Icons | `Icon` with `lucide-react-native` (see below) |
-| Camera | `CameraView` from `expo-camera`, with detection boxes as absolutely positioned `Box`es |
+| Mockup element                               | gluestack-ui component                                                                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Screen layouts, rows                         | `Box`, `VStack`, `HStack`                                                                                                                                    |
+| Titles / body text                           | `Heading`, `Text`                                                                                                                                            |
+| "Show breakdown", "Looks right: add to hand" | `Button`, primary / solid style, large size, + `ButtonText` (+ `ButtonIcon`)                                                                                 |
+| "Scan" (home header)                         | `Button`, primary / solid style, small size, fully rounded                                                                                                   |
+| "Clear" (home header)                        | `Button`, link / ghost style                                                                                                                                 |
+| Progress pips                                | `Pressable` (opens the breakdown) wrapping an `HStack` of `Box` circles; give the `Pressable` an `accessibilityLabel` such as "5 of 7 cards. Show breakdown" |
+| Breakdown row remove                         | `Button`, link / ghost style, icon only, `accessibilityLabel="Remove <card> from hand"`                                                                      |
+| Back, close, flash, remove-card              | `Button`, link / ghost style with `ButtonIcon` only, plus `accessibilityLabel`                                                                               |
+| Stat tiles, breakdown rows, "not sure" panel | `Card`                                                                                                                                                       |
+| Grid tiles                                   | `Pressable` with `accessibilityRole="checkbox"` and `accessibilityState={{ checked }}`                                                                       |
+| Scan candidates                              | `RadioGroup` → `Radio`, `RadioIndicator`, `RadioIcon`, `RadioLabel`                                                                                          |
+| Dividers above bottom bars                   | `Divider`                                                                                                                                                    |
+| Icons                                        | `Icon` with `lucide-react-native` (see below)                                                                                                                |
+| Camera                                       | `CameraView` from `expo-camera`, with detection boxes as absolutely positioned `Box`es                                                                       |
 
 Button styles are described rather than given as exact prop values: use the `variant` / `size` options defined in `src/infrastructure/driving/ui/gluestack/button`, since that file is the reference for its API.
 

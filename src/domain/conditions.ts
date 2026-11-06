@@ -49,13 +49,17 @@ export function conditionTruth(
 ): Truth {
   if ("allOf" in condition) {
     return allTrue(
-      condition.allOf.map((part) => conditionTruth(part, card, settled, unsettled)),
+      condition.allOf.map((part) =>
+        conditionTruth(part, card, settled, unsettled),
+      ),
     );
   }
 
   if ("anyOf" in condition) {
     return anyTrue(
-      condition.anyOf.map((part) => conditionTruth(part, card, settled, unsettled)),
+      condition.anyOf.map((part) =>
+        conditionTruth(part, card, settled, unsettled),
+      ),
     );
   }
 
@@ -73,7 +77,10 @@ export function conditionTruth(
 }
 
 // Checks if a condition, or any part of it, names the specified suit. Walks the same kinds of condition as conditionTruth, so a new kind needs handling in both.
-export function conditionNamesSuit(condition: EffectCondition, suit: Suit): boolean {
+export function conditionNamesSuit(
+  condition: EffectCondition,
+  suit: Suit,
+): boolean {
   if ("allOf" in condition) {
     return condition.allOf.some((part) => conditionNamesSuit(part, suit));
   }

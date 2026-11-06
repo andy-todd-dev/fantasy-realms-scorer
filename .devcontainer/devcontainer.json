@@ -35,5 +35,10 @@
     "EXPO_NO_DEPENDENCY_VALIDATION": "0",
     "EXPO_NO_NEW_ARCH_COMPAT_CHECK": "0"
   },
+  "customizations": {
+    "vscode": {
+      "extensions": ["esbenp.prettier-vscode"]
+    }
+  },
   "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.gradle /home/vscode/.android /usr/local/android"
 }

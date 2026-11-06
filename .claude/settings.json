@@ -3,5 +3,19 @@
     "expo@claude-plugins-official": true,
     "expo@anthropic-plugin-directory": true,
     "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); [ -z \"$f\" ] || npx prettier --write --ignore-unknown --log-level warn \"$f\" || true",
+            "statusMessage": "Formatting with Prettier"
+          }
+        ]
+      }
+    ]
   }
 }

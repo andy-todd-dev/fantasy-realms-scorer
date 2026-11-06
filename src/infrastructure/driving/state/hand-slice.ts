@@ -23,8 +23,9 @@ export const removeCardFromHand = createAppAsyncThunk(
     extra.removeCardFromHand.execute(getState().hand.cardIds, cardId),
 );
 
-export const clearHand = createAppAsyncThunk("hand/clear", (_: void, { extra }) =>
-  extra.clearHand.execute(),
+export const clearHand = createAppAsyncThunk(
+  "hand/clear",
+  (_: void, { extra }) => extra.clearHand.execute(),
 );
 
 const handSlice = createSlice({
