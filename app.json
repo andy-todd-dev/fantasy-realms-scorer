@@ -1,6 +1,7 @@
 {
   "name": "Realms Scorer",
   "slug": "realms-scorer",
+  "version": "0.1.0",
   "android": {
     "package": "dev.andytodd.realmsscorer"
   },

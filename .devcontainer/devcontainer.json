@@ -1,5 +1,5 @@
 {
-  "name": "fantasy-realms-scorer",
+  "name": "realms-scorer",
   "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
   "features": {
     "ghcr.io/devcontainers/features/node:2": {
