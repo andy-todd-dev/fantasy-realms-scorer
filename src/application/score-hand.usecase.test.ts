@@ -19,7 +19,13 @@ describe("ScoreHandUseCase", () => {
     const getByIds = jest.fn(async (_: readonly CardId[]) => [king, queen]);
     const useCase = new ScoreHandUseCase({ cardCatalog: { getByIds } });
 
-    await expect(useCase.execute(["king", "queen"])).resolves.toBe(14);
+    await expect(useCase.execute(["king", "queen"])).resolves.toMatchObject({
+      cards: [
+        { cardId: "king", total: 8 },
+        { cardId: "queen", total: 6 },
+      ],
+      total: 14,
+    });
     expect(getByIds).toHaveBeenCalledWith(["king", "queen"]);
   });
 
@@ -28,7 +34,10 @@ describe("ScoreHandUseCase", () => {
       cardCatalog: { getByIds: async () => [] },
     });
 
-    await expect(useCase.execute([])).resolves.toBe(0);
+    await expect(useCase.execute([])).resolves.toMatchObject({
+      cards: [],
+      total: 0,
+    });
   });
 
   it("fails when the catalog can't serve the cards", async () => {

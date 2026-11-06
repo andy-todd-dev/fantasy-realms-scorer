@@ -9,6 +9,7 @@ import { AddCardToHandUseCase } from "../../../application/add-card-to-hand.usec
 import { ClearHandUseCase } from "../../../application/clear-hand.usecase";
 import { RemoveCardFromHandUseCase } from "../../../application/remove-card-from-hand.usecase";
 import type { Card, CardId } from "../../../domain/card";
+import type { CardScore, HandScore } from "../../../domain/score";
 import { createAppStore } from "../state/store";
 import { App } from "./App";
 
@@ -57,16 +58,46 @@ const eightCards: Card[] = Array.from({ length: 8 }, (_, index) => ({
   baseStrength: 1,
 }));
 
+// Builds a score from card scores, adding up the totals.
+const handScoreOf = (cardScores: readonly CardScore[]): HandScore => {
+  const sum = (key: "base" | "bonus" | "penalty" | "total") =>
+    cardScores.reduce((total, cardScore) => total + cardScore[key], 0);
+
+  return {
+    cards: cardScores,
+    base: sum("base"),
+    bonus: sum("bonus"),
+    penalty: sum("penalty"),
+    total: sum("total"),
+  };
+};
+
+// A score with only a total, for tests that only look at the total.
+const totalOnly = (total: number) => ({
+  ...handScoreOf([]),
+  base: total,
+  total,
+});
+
 const sumStrengths = async (cardIds: readonly CardId[]) =>
-  cards
-    .filter((card) => cardIds.includes(card.id))
-    .reduce((score, card) => score + card.baseStrength, 0);
+  handScoreOf(
+    [...cards, ...eightCards]
+      .filter((card) => cardIds.includes(card.id))
+      .map(({ id, baseStrength }) => ({
+        cardId: id,
+        blanked: false,
+        base: baseStrength,
+        bonus: 0,
+        penalty: 0,
+        total: baseStrength,
+      })),
+  );
 
 async function renderApp({
   scoreHand = sumStrengths,
   loadCards = async () => cards,
 }: {
-  scoreHand?: (cardIds: readonly CardId[]) => Promise<number>;
+  scoreHand?: (cardIds: readonly CardId[]) => Promise<number | HandScore>;
   loadCards?: () => Promise<Card[]>;
 } = {}) {
   const store = createAppStore({
@@ -74,7 +105,12 @@ async function renderApp({
     clearHand: new ClearHandUseCase(),
     loadCards: { execute: loadCards },
     removeCardFromHand: new RemoveCardFromHandUseCase(),
-    scoreHand: { execute: scoreHand },
+    scoreHand: {
+      execute: async (cardIds) => {
+        const score = await scoreHand(cardIds);
+        return typeof score === "number" ? totalOnly(score) : score;
+      },
+    },
   });
   const user = userEvent.setup();
 
@@ -293,7 +329,7 @@ describe("the home screen", () => {
 });
 
 describe("the breakdown screen", () => {
-  it("opens from the button, listing the hand in the order it was picked", async () => {
+  it("opens from the button, listing the hand highest-scoring first", async () => {
     const { showBreakdown, tapCard } = await renderApp();
 
     await tapCard("queen");
@@ -310,7 +346,7 @@ describe("the breakdown screen", () => {
     );
     expect(
       screen.getAllByTestId(/^breakdown-card-/).map((row) => row.props.testID),
-    ).toEqual(["breakdown-card-queen", "breakdown-card-king"]);
+    ).toEqual(["breakdown-card-king", "breakdown-card-queen"]);
     expect(screen.queryByTestId("breakdown-card-knights")).toBeNull();
   });
 
@@ -394,16 +430,75 @@ describe("the breakdown screen", () => {
     await expectScore("0");
   });
 
-  it("shows placeholders for the figures scoring doesn't report yet", async () => {
-    const { showBreakdown, tapCard } = await renderApp();
+  it("shows the base, bonuses and penalties of the hand and of each card", async () => {
+    const { showBreakdown, tapCard } = await renderApp({
+      scoreHand: async () =>
+        handScoreOf([
+          {
+            cardId: "king",
+            blanked: false,
+            base: 8,
+            bonus: 10,
+            penalty: -3,
+            total: 15,
+          },
+          {
+            cardId: "queen",
+            blanked: false,
+            base: 6,
+            bonus: 0,
+            penalty: 0,
+            total: 6,
+          },
+          {
+            cardId: "knights",
+            blanked: true,
+            base: 0,
+            bonus: 0,
+            penalty: 0,
+            total: 0,
+          },
+        ]),
+    });
 
+    await tapCard("knights");
+    await tapCard("queen");
     await tapCard("king");
     await showBreakdown();
 
-    expect(screen.getByText("Base")).toBeOnTheScreen();
-    expect(screen.getByText("Bonuses")).toBeOnTheScreen();
-    expect(screen.getByText("Penalties")).toBeOnTheScreen();
-    expect(screen.getByText("Blanked cards: –")).toBeOnTheScreen();
+    await waitFor(() =>
+      expect(screen.getByTestId("breakdown-base")).toHaveTextContent("14"),
+    );
+    expect(screen.getByTestId("breakdown-bonus")).toHaveTextContent("+10");
+    expect(screen.getByTestId("breakdown-penalty")).toHaveTextContent(
+      "\u22123",
+    );
+    expect(screen.getByTestId("breakdown-sum")).toHaveTextContent(
+      "14 + 10 \u2212 3",
+    );
+    expect(screen.getByTestId("breakdown-total")).toHaveTextContent("21");
+    expect(screen.getByTestId("breakdown-blanked")).toHaveTextContent(
+      "Blanked cards: Knights",
+    );
+
+    expect(
+      screen.getAllByTestId(/^breakdown-card-/).map((row) => row.props.testID),
+    ).toEqual([
+      "breakdown-card-king",
+      "breakdown-card-queen",
+      "breakdown-card-knights",
+    ]);
+    expect(screen.getByTestId("card-total-king")).toHaveTextContent("15");
+    expect(screen.getByTestId("breakdown-card-king")).toHaveTextContent(
+      /Base strength8.*Bonuses\+10.*Penalties\u22123/,
+    );
+    expect(screen.getByTestId("breakdown-card-queen")).not.toHaveTextContent(
+      /Bonuses|Penalties/,
+    );
+    expect(screen.getByTestId("card-total-knights")).toHaveTextContent("0");
+    expect(screen.getByTestId("breakdown-card-knights")).toHaveTextContent(
+      /Blanked: scores 0/,
+    );
   });
 
   it("shows a placeholder total when scoring fails", async () => {
@@ -415,6 +510,8 @@ describe("the breakdown screen", () => {
     await showBreakdown();
 
     expect(screen.getByTestId("breakdown-total")).toHaveTextContent("–");
+    expect(screen.getByTestId("breakdown-base")).toHaveTextContent("–");
+    expect(screen.getByTestId("card-total-king")).toHaveTextContent("–");
     expect(screen.getByTestId("breakdown-card-king")).toBeOnTheScreen();
   });
 });

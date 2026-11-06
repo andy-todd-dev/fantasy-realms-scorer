@@ -1,5 +1,5 @@
 import { Card, CardEffect, EffectCondition } from "./card";
-import { calculateScore } from "./score";
+import { calculateScore, scoreHand } from "./score";
 
 const card = (
   id: string,
@@ -1157,6 +1157,112 @@ describe("calculateScore", () => {
           clearsArmyWord,
         ]),
       ).toBe(22); // (1 + 10) + 10 + 1, naming a card doesn't name the suit
+    });
+  });
+});
+
+describe("scoreHand", () => {
+  const withBonusAndPenalty: Card = {
+    ...card("subject", "wizard", 10),
+    bonus: {
+      text: "",
+      effects: [{ kind: "points", points: 5, per: { suit: "army" } }],
+    },
+    penalty: { text: "", effects: [{ kind: "points", points: -3 }] },
+  };
+
+  it("scores no cards as 0", () => {
+    expect(scoreHand([])).toEqual({
+      cards: [],
+      base: 0,
+      bonus: 0,
+      penalty: 0,
+      total: 0,
+    });
+  });
+
+  it("splits each card's score into base, bonus and penalty, keeping the given order", () => {
+    expect(scoreHand([withBonusAndPenalty, anArmy, anotherArmy])).toEqual({
+      cards: [
+        {
+          cardId: "subject",
+          blanked: false,
+          base: 10,
+          bonus: 10,
+          penalty: -3,
+          total: 17,
+        },
+        {
+          cardId: "army-1",
+          blanked: false,
+          base: 10,
+          bonus: 0,
+          penalty: 0,
+          total: 10,
+        },
+        {
+          cardId: "army-2",
+          blanked: false,
+          base: 20,
+          bonus: 0,
+          penalty: 0,
+          total: 20,
+        },
+      ],
+      base: 40,
+      bonus: 10,
+      penalty: -3,
+      total: 47,
+    });
+  });
+
+  it("lists a blanked card as scoring nothing", () => {
+    const blanksArmies: Card = {
+      ...card("blanker", "flood", 7),
+      penalty: {
+        text: "",
+        effects: [{ kind: "blank", targets: [{ suit: "army" }] }],
+      },
+    };
+
+    expect(scoreHand([anArmy, blanksArmies])).toEqual({
+      cards: [
+        {
+          cardId: "army-1",
+          blanked: true,
+          base: 0,
+          bonus: 0,
+          penalty: 0,
+          total: 0,
+        },
+        {
+          cardId: "blanker",
+          blanked: false,
+          base: 7,
+          bonus: 0,
+          penalty: 0,
+          total: 7,
+        },
+      ],
+      base: 7,
+      bonus: 0,
+      penalty: 0,
+      total: 7,
+    });
+  });
+
+  it("counts a cleared penalty as 0", () => {
+    const clearsWizards = card("clearer", "land", 1, [
+      { kind: "clearPenalty", targets: [{ suit: "wizard" }] },
+    ]);
+
+    expect(scoreHand([withBonusAndPenalty, clearsWizards]).cards[0]).toEqual({
+      cardId: "subject",
+      blanked: false,
+      base: 10,
+      bonus: 0,
+      penalty: 0,
+      total: 10,
     });
   });
 });

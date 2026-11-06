@@ -1,19 +1,10 @@
-import { Card, CardAbility } from "../domain/card";
+import { Card } from "../domain/card";
 import { CardCatalog, LoadCardsPorts } from "./load-cards.ports";
 
-type CardAbilityView = Pick<CardAbility, "text">;
+export type CardView = Pick<Card, "id" | "name" | "suit">;
 
-export type CardView = Omit<Card, "bonus" | "penalty"> & {
-  readonly bonus?: CardAbilityView;
-  readonly penalty?: CardAbilityView;
-};
-
-function toCardView({ bonus, penalty, ...card }: Card): CardView {
-  return {
-    ...card,
-    ...(bonus && { bonus: { text: bonus.text } }),
-    ...(penalty && { penalty: { text: penalty.text } }),
-  };
+function toCardView({ id, name, suit }: Card): CardView {
+  return { id, name, suit };
 }
 
 export interface LoadCards {

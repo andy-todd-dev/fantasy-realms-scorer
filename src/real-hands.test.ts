@@ -19,7 +19,9 @@ describe("scoring real hands", () => {
 
   const expectScore = async (cardIds: readonly string[], expected: number) => {
     for (const ordering of orderings(cardIds)) {
-      await expect(scoreHand.execute(ordering)).resolves.toBe(expected);
+      await expect(scoreHand.execute(ordering)).resolves.toMatchObject({
+        total: expected,
+      });
     }
   };
 
